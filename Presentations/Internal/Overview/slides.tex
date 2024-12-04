@@ -1,4 +1,10 @@
 \documentclass{beamer}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes.multipart}
+
+\usepackage[dvipsnames]{xcolor}
+
 %Information to be included in the title page:
 \title{Understanding the Structure of District Heating Networks from Measurement Data}
 \subtitle{A First Overview}
@@ -28,7 +34,33 @@
 
 \begin{frame}
 \frametitle{Influence of the Structure}
-  TODO: sketch
+  \begin{figure}
+    \begin{tikzpicture}
+      \node (A) [rectangle, draw, rounded corners] at (0, 2) {
+        \begin{tabular}{c}
+          \color{ForestGreen}
+          Inputs \\
+          \color{ForestGreen}
+          Demands \\
+          \color{Orange}
+          Network Structure
+        \end{tabular}
+      };
+      \node (B) [rectangle, draw, rounded corners] at (1, 0) {
+        Flow of Matter
+      };
+      \node (C) [rectangle, draw, rounded corners] at (0, -2) {
+        \begin{tabular}{c}
+          Flow of Heat \\
+          $\Rightarrow$ \color{RoyalBlue} Changing Temperature at Consumers
+        \end{tabular}
+      };
+
+      \draw[->] (A) -- (B) node [midway, right] {\tiny{affects}};
+      \draw[->] (A) to [out=220, in=145] (C) node [midway, left, xshift=-50] {\tiny{affects}};
+      \draw[->] (B) -- (C) node [midway, right] {\tiny{affects}};
+    \end{tikzpicture}
+  \end{figure}
 \end{frame}
 
 \end{document}
