@@ -56,9 +56,9 @@
         \end{tabular}
       };
 
-      \draw[->] (A) to [out=310, in=90] (B) node [midway, right, xshift=30, yshift=20] {\tiny{compute (I)}};
-      \draw[->] (A) to [out=230, in=135] (C) node [midway, left, xshift=-35] {\tiny{compute (II)}};
-      \draw[->] (B) to [out=270, in=50] (C) node [midway, right, xshift=30, yshift=-20] {\tiny{computer (II)}};
+      \draw[->] (A) to [out=310, in=90]  (B) node [midway, right, xshift=30, yshift=20]  {\tiny{affects}};
+      \draw[->] (A) to [out=230, in=135] (C) node [midway, left, xshift=-35]             {\tiny{affects}};
+      \draw[->] (B) to [out=270, in=50]  (C) node [midway, right, xshift=30, yshift=-20] {\tiny{affects}};
     \end{tikzpicture}
   \end{figure}
 
@@ -69,7 +69,7 @@
 \frametitle{Influence of the Structure}
   Simplify to (hopefully) allow backwards computation
 
-  \vspace{2em}
+  \vspace{1em}
 
   \begin{figure}
     \begin{tikzpicture}
@@ -94,6 +94,10 @@
       \draw[<->] (A) to (B) node [midway, right, xshift=5] {\tiny{compute}};
     \end{tikzpicture}
   \end{figure}
+
+  \vspace{1em}
+
+  Probably not possible because finding loops step is not a simple function
 \end{frame}
 
 \begin{frame}
@@ -104,7 +108,20 @@
         \item Single values of edge icidence matrix
         \item Influences loop incidence matrix also
       \end{itemize}
-    \item Optimize for low error
+    \item Optimize for low error (discrepancy to measured data)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Possible Optimizations}
+  \begin{itemize}
+    \item Compute new loops based on existing loops
+    \item Reducing the problem space:
+    \begin{itemize}
+      \item Only check connections that make sense (based on node coordinates)
+      \item Use heuristics to check most likely first
+      \item Group based on loops they produce and disqalify whole groups early
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
