@@ -21,14 +21,52 @@
   \begin{itemize}
     \item Sometimes, the information about the structure of district heating networks is incomplete
     \item But needed for precise simulation
+      \begin{itemize}
+        \item Model does not have to be identical to real network
+        \item Rather it should act similarly to the real network
+      \end{itemize}
   \end{itemize}
 \end{frame}
+
+%\begin{frame}
+%\frametitle{Influence of the Structure (Outdated Procedure)}
+%  \begin{figure}
+%    \begin{tikzpicture}
+%      \node (A) [rectangle, draw, rounded corners] at (0, 2) {
+%        \begin{tabular}{c}
+%          \color{ForestGreen}
+%          Inputs \\
+%          \color{ForestGreen}
+%          Demands \\
+%          \color{Orange}
+%          Network Structure
+%        \end{tabular}
+%      };
+%      \node (B) [rectangle, draw, rounded corners] at (1, 0) {
+%        Flow of Matter
+%      };
+%      \node (C) [rectangle, draw, rounded corners] at (0, -2) {
+%        \begin{tabular}{c}
+%          Flow of Heat \\
+%          $\Rightarrow$ \color{RoyalBlue} Changing Temperature at Consumers
+%        \end{tabular}
+%      };
+%
+%      \draw[->] (A) to [out=310, in=90]  (B) node [midway, right, xshift=30, yshift=20]  {\tiny{affects}};
+%      \draw[->] (A) to [out=230, in=135] (C) node [midway, left, xshift=-35]             {\tiny{affects}};
+%      \draw[->] (B) to [out=270, in=50]  (C) node [midway, right, xshift=30, yshift=-20] {\tiny{affects}};
+%    \end{tikzpicture}
+%  \end{figure}
+%
+%  Computation split for efficiency
+%\end{frame}
+%
 
 \begin{frame}
 \frametitle{Influence of the Structure (Current Procedure)}
   \begin{figure}
     \begin{tikzpicture}
-      \node (A) [rectangle, draw, rounded corners] at (0, 2) {
+      \node (A) [rectangle, draw, rounded corners] at (0, 1.5) {
         \begin{tabular}{c}
           \color{ForestGreen}
           Inputs \\
@@ -38,28 +76,22 @@
           Network Structure
         \end{tabular}
       };
-      \node (B) [rectangle, draw, rounded corners] at (1, 0) {
-        Flow of Matter
-      };
-      \node (C) [rectangle, draw, rounded corners] at (0, -2) {
+      \node (B) [rectangle, draw, rounded corners] at (0, -1.5) {
         \begin{tabular}{c}
+          Flow of Matter \\
           Flow of Heat \\
           $\Rightarrow$ \color{RoyalBlue} Changing Temperature at Consumers
         \end{tabular}
       };
 
-      \draw[->] (A) to [out=310, in=90]  (B) node [midway, right, xshift=30, yshift=20]  {\tiny{affects}};
-      \draw[->] (A) to [out=230, in=135] (C) node [midway, left, xshift=-35]             {\tiny{affects}};
-      \draw[->] (B) to [out=270, in=50]  (C) node [midway, right, xshift=30, yshift=-20] {\tiny{affects}};
+      \draw[->] (A) to (B) node [midway, right, xshift=5] {\tiny{compute}};
     \end{tikzpicture}
   \end{figure}
-
-  Computation split for efficiency
 \end{frame}
 
 \begin{frame}
-\frametitle{Influence of the Structure}
-  Simplify to (hopefully) allow backwards computation
+\frametitle{Influence of the Structure (Backwards Computation)}
+  Somehow compute in the other direction
 
   \vspace{1em}
 
@@ -102,6 +134,13 @@
       \end{itemize}
     \item Optimize for low error (discrepancy to measured data)
   \end{itemize}
+
+  \vspace{2em}
+
+  Possibly
+  \begin{itemize}
+    \item Connections as continuous values instead of discrete
+  \end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -111,22 +150,44 @@
     \item Reducing the problem space:
     \begin{itemize}
       \item Only check connections that make sense (based on node coordinates)
+        \begin{itemize}
+          \item Based on coordinates
+          \item Based on streets
+        \end{itemize}
       \item Use heuristics to check most likely first
-      \item Group based on loops they produce and disqalify whole groups early
+      \item Group possible connections and disqalify whole groups early
     \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Measurements and Signals}
+  Measurements:
+  \begin{itemize}
+    \item Temperature and flow at consumers
+    \item Flow (Vorlauf) temperature
+  \end{itemize}
+
+  \vspace{2em}
+
+  Signals:
+  \begin{itemize}
+    \item Flow (Vorlauf) temperature
+    \item Possibly: flow at consumers
   \end{itemize}
 \end{frame}
 
 \begin{frame}
 \frametitle{To be Determined}
   \begin{itemize}
-    \item What information is provided
-    \item How to complete that information using measurement data
-    \item What kind of measurement data can we get
+    \item Useful signals to send into the network for best data
       \begin{itemize}
-        \item Flow (Pressure?) data would be very nice
-        \item Temperature data over time also possible, but more steps involved so more room for error
+        \item Pulse of temperature at producer
+        \item Possibly: increse/decrease flow at a consumer
       \end{itemize}
+    \item Possibility of inversely computing connections
+    \item Possibility of optimizing connections continuously
+    \item Possibilities of reducing problem space in case of discrete optimizations
   \end{itemize}
 \end{frame}
 
