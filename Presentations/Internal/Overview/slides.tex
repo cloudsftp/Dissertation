@@ -90,7 +90,7 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Influence of the Structure (Backwards Computation)}
+\frametitle{Identifying the Structure --- Approach I}
   Somehow compute in the other direction
 
   \vspace{1em}
@@ -121,11 +121,16 @@
 
   \vspace{1em}
 
-  Probably not possible because finding loops step is not a simple function
+  Forward computation requires finding loops in the structure.
+  This seems very hard to reverse, since not a simple function.
 \end{frame}
 
 \begin{frame}
-\frametitle{Finding Parameters --- A Proposal}
+\frametitle{Identifying the Structure --- Approach II}
+  Formulate finding the structure as a optimization problem.
+
+  \vspace{2em}
+
   \begin{itemize}
     \item Possible Connections as parameters
       \begin{itemize}
@@ -144,12 +149,12 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Possible Optimizations}
+\frametitle{Possible Optimizations for Approach II}
   \begin{itemize}
-    \item Compute new loops based on existing loops
+    \item Use already computed loops to speed up computation of the loops in the new structure
     \item Reducing the problem space:
     \begin{itemize}
-      \item Only check connections that make sense (based on node coordinates)
+      \item Only check connections that make sense
         \begin{itemize}
           \item Based on coordinates
           \item Based on streets
@@ -180,7 +185,7 @@
 \begin{frame}
 \frametitle{To be Determined}
   \begin{itemize}
-    \item Useful signals to send into the network for best data
+    \item Useful signals to send into the network for most helpful data
       \begin{itemize}
         \item Pulse of temperature at producer
         \item Possibly: increse/decrease flow at a consumer
@@ -188,6 +193,8 @@
     \item Possibility of inversely computing connections
     \item Possibility of optimizing connections continuously
     \item Possibilities of reducing problem space in case of discrete optimizations
+      \vspace{1em}
+    \item What already used techniques for identifying the structure of electrical networks may apply
   \end{itemize}
 \end{frame}
 
