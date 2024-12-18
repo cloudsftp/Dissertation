@@ -5,6 +5,8 @@
 
 \usepackage[dvipsnames]{xcolor}
 
+\usepackage{cite}
+
 %Information to be included in the title page:
 \title{Understanding the Structure of District Heating Networks from Measurement Data}
 \subtitle{A First Overview}
@@ -162,6 +164,7 @@
       \item Use heuristics to check most likely first
       \item Group possible connections and disqalify whole groups early
     \end{itemize}
+    \item Compute a initial guess with a linear heat/mass transfer model (based on~\cite{wang2024identification})
   \end{itemize}
 \end{frame}
 
@@ -194,8 +197,13 @@
     \item Possibility of optimizing connections continuously
     \item Possibilities of reducing problem space in case of discrete optimizations
       \vspace{1em}
-    \item What already used techniques for identifying the structure of electrical networks may apply
+    \item What other already techniques for identifying the structure of (electrical) networks may apply
   \end{itemize}
 \end{frame}
 
+\begin{frame}
+\frametitle{References}
+  \bibliographystyle{abbr}
+  \bibliography{../../../references.bib}
+\end{frame}
 \end{document}
