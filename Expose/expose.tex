@@ -1,0 +1,46 @@
+\documentclass{scrartcl}
+
+\usepackage{acronym}
+\usepackage{hyperref}
+
+\usepackage[a4paper, total={15cm, 25cm}]{geometry}
+\usepackage[parfill]{parskip}
+
+\usepackage{todonotes}
+
+\title{Understanding the Structure of District Heating Networks from Measurement Data}
+\subtitle{an Exposè}
+\author{Fabian Weik}
+
+\begin{document}
+
+    \maketitle
+
+    \section{Acronyms}
+
+    \begin{acronym}
+        \acro{DHN}[DHN]{District Heating Network}
+    \end{acronym}
+
+    \section{Introduction}
+
+    Recently, \ac{DHN} have been of ever growing importance.
+    Especially in Germany
+    \todo{source of government decisions}
+
+    For efficient operation, we want to simulate these networks.
+    One example is AD-NET or rather AD-HEAT
+    \todo{source to website}
+
+    For the simulation, we require knowledge about all pipes, producers, and consumers.
+    Unfortunately, this is not guaranteed.
+    Especially in older systems the structure (or topology) of the network might not be known in parts or completely.
+    \todo{source}
+
+    To enable the simulation of such networks, it would be helpful to recover the structure of the network from measurement data.
+    This work aims at exploring possibilities, their requirements and limitations.
+    We don't necessarily require the recovered structure to be identical to the actual structure of the real-wold network --- rather  the goal is a structure that yields good simulation results.
+
+    Measurement data: We have access to the temperature of the flow network of the \ac{DHN}.
+
+\end{document}
