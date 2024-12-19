@@ -8,9 +8,10 @@
 \usepackage{todonotes}
 \usepackage{acronym}
 
-\usepackage{cite}
 \usepackage{hyperref}
 
+\usepackage{biblatex}
+\addbibresource{../references.bib}
 
 \title{Understanding the Structure of District Heating Networks from Measurement Data}
 \subtitle{an Exposè}
@@ -33,8 +34,7 @@
     \todo{source of government decisions}
 
     For efficient operation, we want to simulate these networks.
-    One example is AD-NET or rather AD-HEAT
-    \todo{source to website}
+    One example is AD-NET or rather AD-HEAT~\cite{adnetheat}.
 
     For the simulation, we require knowledge about all pipes, producers, and consumers.
     Unfortunately, this is not guaranteed.
@@ -55,6 +55,5 @@
     One approach that seems promising, uses a linear power flow model first to derive a first guess of the structure (and other line parameters) and then refines this first guess with the full model.
     The second phase is done by stating the problem as a optimization poroblem, while in the first step is achieved with linear regression~\cite{wang2024identification}.
 
-    \bibliographystyle{plain}
-    \bibliography{../references.bib}
+    \printbibliography
 \end{document}
