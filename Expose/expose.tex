@@ -30,15 +30,14 @@
     \section{Introduction}
 
     Recently, \ac{DHN} have been of ever growing importance.
-    Especially in Germany
-    \todo{source of government decisions}
+    Especially in Germany, sice the government decided to make \ac{DHN} a core component of the sustainability strategy~\cite{regierung2024heatingplanning}.
 
     For efficient operation, we want to simulate these networks.
     One example is AD-NET or rather AD-HEAT~\cite{adnetheat}.
 
     For the simulation, we require knowledge about all pipes, producers, and consumers.
     Unfortunately, this is not guaranteed.
-    Especially in older systems the structure (or topology) of the network might not be known in parts or completely.
+    Especially in older systems the structure (or topology) of the network might not be known in parts or completely unknown.
     \todo{source}
 
     To enable the simulation of such networks, it would be helpful to recover the structure of the network from measurement data.
@@ -54,6 +53,13 @@
 
     One approach that seems promising, uses a linear power flow model first to derive a first guess of the structure (and other line parameters) and then refines this first guess with the full model.
     The second phase is done by stating the problem as a optimization poroblem, while in the first step is achieved with linear regression~\cite{wang2024identification}.
+
+    In our case, we assume the line parameters to be known.
+    We also assume that some connections in the network are known.
+
+    Visualization will be used first to identify how the behavior of the \ac{DHN} changes when the structure is altered.
+    Then also to understand possible approaches to identifying the structure.
+    And finally, to visualize the resulting structure of the \ac{DHN}.
 
     \printbibliography
 \end{document}
