@@ -14,46 +14,56 @@
 \addbibresource{../references.bib}
 
 \title{Understanding the Structure of District Heating Networks from Measurement Data}
-\subtitle{an Exposè}
+\subtitle{an Exposé}
 \author{Fabian Weik}
 
 \begin{document}
 
     \maketitle
 
-    \section{Acronyms}
-
-    \begin{acronym}
-        \acro{DHN}[DHN]{District Heating Network}
-    \end{acronym}
-
     \section{Introduction}
 
-    Recently, \ac{DHN} have been of ever growing importance.
-    Especially in Germany, sice the government decided to make \ac{DHN} a core component of the sustainability strategy~\cite{regierung2024heatingplanning}.
+    Recently, \ac{DHNp} have been of ever growing importance.
+    Especially in Germany, since the government decided to make \ac{DHNp} a core component of the sustainability strategy~\cite{regierung2024heatingplanning}.
     This is due to the high percentage of energy used for heating.
     Also can be used for cooling if necessary in the future.
 
     For efficient operation, we want to simulate these networks.
-    One example is AD-NET or rather AD-HEAT~\cite{adnetheat}.
+    One example is the software ``AD Net Heat'' that is developed at the Fraunhofer ITWM~\cite{adnetheat}.
 
     For the simulation, we require knowledge about all pipes, producers, and consumers.
     Unfortunately, this is not guaranteed.
-    Especially in older systems the structure (or topology) of the network might not be known in parts or completely unknown.
+    Especially in older \acp{DHN} the structure of the network might not be known in parts or completely unknown.
     \todo{source}
 
     To enable the simulation of such networks, it would be helpful to recover the structure of the network from measurement data.
-    This work aims at exploring possibilities, their requirements and limitations.
+    This work aims at exploring possibilities to achieve that task, their requirements and limitations.
+
+    \section{Goal}
+
+    We want to recover a structure that allows the accurate simulation from measurement data.
     We don't necessarily require the recovered structure to be identical to the actual structure of the real-wold network --- rather  the goal is a structure that yields good simulation results.
+
+    \subsection{Available Data}
 
     Measurement data: We have access to the temperature of the flow network of the \ac{DHN} at the producers and at at least some consumers.
     Signals: We are also able to change the temperature of the flow network of the \ac{DHN} at the producers.
 
+    \subsection{State of the Art}
+
     There exists some literature on how to recover the structure of \ac{DHN}.
+    Unfortunately, it focuses on finding parameters of pipes and assumes full knowledge of the structure of the network.
     But the literature on how to recover the structure of electrical networks is far more extensive.
     Luckily, both \ac{DHN} and electrical networks follow the Kirchhoff laws.
+    \todo{citation for kirchoff laws}
 
-    One approach that seems promising, uses a linear power flow model first to derive a first guess of the structure (and other line parameters) and then refines this first guess with the full model.
+    \section{Method}
+
+    A first idea is to formulate the problem as a optimization problem.
+    The input to the objective function therefore is the possible edges in the network.
+    And the output is the error of the simulation compared to the measured data.
+
+    One approach in the literature regarding electrical networks that seems promising for \ac{DHN}, uses a linear power flow model first to derive a first guess of the structure (and other line parameters) and then refines this first guess with the full model.
     The second phase is done by stating the problem as a optimization poroblem, while in the first step is achieved with linear regression~\cite{wang2024identification}.
 
     In our case, we assume the line parameters to be known.
@@ -64,4 +74,12 @@
     And finally, to visualize the resulting structure of the \ac{DHN}.
 
     \printbibliography
+
+    \section{Timetable}
+
+    \section{Acronyms}
+
+    \begin{acronym}
+        \acro{DHN}[DHN]{District Heating Network}
+    \end{acronym}
 \end{document}
