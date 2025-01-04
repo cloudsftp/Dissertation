@@ -5,12 +5,17 @@
 \setlength{\parskip}{1em}
 \setlength{\parindent}{0em}
 
+\usepackage{amsmath}
+
 \usepackage{todonotes}
 \usepackage{acronym}
 
 \usepackage{hyperref}
+\usepackage{cleveref}
 
-\usepackage{biblatex}
+\usepackage[
+  style=numeric,
+]{biblatex}
 \addbibresource{../references.bib}
 
 \title{Understanding the Structure of District Heating Networks from Measurement Data}
@@ -23,8 +28,8 @@
 
     \section{Introduction}
 
-    Recently, \ac{DHNp} have been of ever growing importance.
-    Especially in Germany, since the government decided to make \ac{DHNp} a core component of the sustainability strategy~\cite{regierung2024heatingplanning}.
+    Recently, \acp{DHN} have been of ever growing importance.
+    Especially in Germany, since the government decided to make \acp{DHN} a core component of the sustainability strategy~\cite{regierung2024heatingplanning}.
     This is due to the high percentage of energy used for heating.
     Also can be used for cooling if necessary in the future.
 
@@ -46,8 +51,8 @@
 
     \subsection{Available Data}
 
-    Measurement data: We have access to the temperature of the flow network of the \ac{DHN} at the producers and at at least some consumers.
-    Signals: We are also able to change the temperature of the flow network of the \ac{DHN} at the producers.
+    Measurement data: We have access to the temperature and the mass flux of the flow network of the \ac{DHN} at the producers and at at least some consumers.
+    Signals: We are also able to change the temperature and the mass flux of the flow network of the \ac{DHN} at the producers.
 
     \subsection{State of the Art}
 
@@ -66,12 +71,40 @@
     One approach in the literature regarding electrical networks that seems promising for \ac{DHN}, uses a linear power flow model first to derive a first guess of the structure (and other line parameters) and then refines this first guess with the full model.
     The second phase is done by stating the problem as a optimization poroblem, while in the first step is achieved with linear regression~\cite{wang2024identification}.
 
-    In our case, we assume the line parameters to be known.
-    We also assume that some connections in the network are known.
+    In our case, we assume that we know the line parameters.
+    We also assume that we know some connections in the network.
 
     Visualization will be used first to identify how the behavior of the \ac{DHN} changes when the structure is altered.
-    Then also to understand possible approaches to identifying the structure.
+    Then also to understand possible approaches to recover the structure from measurement data.
     And finally, to visualize the resulting structure of the \ac{DHN}.
+
+    \subsection{Considerations of the Dynamics of \acp{DHN}}
+
+    The Euler equations that define the dynamics on pipes in a \ac{DHN} are given as
+
+    \begin{subequations}
+    \begin{align}
+      \partial_x v & = 0 \\
+      \partial_t v + \dfrac{1}{\rho} \partial_x p & = \dfrac{\lambda}{2d} v |v| + g \partial_x b \label{eq:pipe-mass-flux} \\
+      \partial_t e + v \partial_x e & = - \dfrac{4k}{d} (T(e) - T_\infty) \label{eq:pipe-energy-flux}
+    \end{align}
+    \end{subequations}
+    \hfill\cite{eimer2022modeling}
+
+    \Cref{eq:pipe-mass-flux} is not linear, since $v$ is multiplied with its absolute value on the right hand side.
+    In~\citeauthor{eimer2022modeling}~(\citeyear{eimer2022modeling})~\cite{eimer2022modeling}, this equation was solved as a stationary problem and the next equation, \Cref{eq:pipe-energy-flux}, concerned with the actual energy transfer is solved later as an instationary problem.
+    Since the function $T$ is given as a first order approximation $T(e) = 1.94 + 220.54 e$, it is linear~\cite{eimer2022modeling}.
+    Therefore, \Cref{eq:pipe-energy-flux} is also linear.
+    \todo{is this true?}
+
+    \subsection{Procedure}
+
+    First, get $v$ (and the adjacency matrix $A$) by solving \Cref{eq:pipe-energy-flux} based on measurement data, which gives us some idea about $e$.
+    We assume to know $k, d$, and $T$.
+
+    Then, validate $v$ based on $\rho$.
+    We have some idea about $\rho$ based on our signals.
+    We assume to know $\lambda, d$, and $b$.
 
     \printbibliography
 
