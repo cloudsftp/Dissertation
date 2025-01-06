@@ -92,7 +92,7 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Identifying the Structure --- Approach I}
+\frametitle{Identifying the Structure --- Goal}
   Somehow compute in the other direction
 
   \vspace{1em}
@@ -128,7 +128,7 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Identifying the Structure --- Approach II}
+\frametitle{Identifying the Structure --- Approach I}
   Formulate finding the structure as a optimization problem.
 
   \vspace{2em}
@@ -151,7 +151,7 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Possible Optimizations for Approach II}
+\frametitle{Identifying the Structure --- Approach I --- Possible Optimizations}
   \begin{itemize}
     \item Use already computed loops to speed up computation of the loops in the new structure
     \item Reducing the problem space:
@@ -169,19 +169,67 @@
 \end{frame}
 
 \begin{frame}
+\frametitle{Identifying the Structure --- Approach II}
+  \begin{itemize}
+    \item Calculate possible velocities
+    \item Check whether velocities are plausible with supply and demand
+    \begin{itemize}
+      \item Are these velocities a solution of the hydraulic problem?
+    \end{itemize}
+  \end{itemize}
+
+  \begin{figure}
+    \begin{tikzpicture}
+      \node (A) [rectangle, draw, rounded corners] at (0, 2.0) {
+        \begin{tabular}{c}
+          \color{RoyalBlue} Changing Temperature at Consumers \\
+          \color{ForestGreen} Mass Flux at Consumers \\
+          \color{ForestGreen} Pressure at Producers
+        \end{tabular}
+      };
+      \node (B) [rectangle, draw, rounded corners] at (0, 0) {
+        \begin{tabular}{c}
+          Network Structure and Mass Flux Everywhere \\
+          (multiple possibilities)
+        \end{tabular}
+      };
+      \node (C) [rectangle, draw, rounded corners] at (0, -2.0) {
+        \begin{tabular}{c}
+          \color{Orange} Network Structure
+        \end{tabular}
+      };
+
+      \draw[->] (A) to (B) node [midway, right, xshift=5, yshift=25] {\tiny{compute (linear?)}};
+      \draw[->] (B) to (C) node [midway, right, xshift=5, yshift=-32] {\tiny{eliminate impossible configurations}};
+    \end{tikzpicture}
+  \end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{Identifying the Structure --- Approach II --- Challenges}
+  \begin{itemize}
+    \item The change in flow (Vorlauf) temperature at the consumers leads to a change in velocity at the consumers, assuming constant power demand
+    \begin{itemize}
+      \item Introduces discontinuities because of possibly changing directions of mass flux
+      \item Makes the problem non-linear
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
 \frametitle{Measurements and Signals}
   Measurements:
   \begin{itemize}
-    \item Temperature and flow at consumers
-    \item Flow (Vorlauf) temperature
+    \item Temperature and mass flux at consumers
+    \item Temperature and pressure at the producers
   \end{itemize}
 
   \vspace{2em}
 
   Signals:
   \begin{itemize}
-    \item Flow (Vorlauf) temperature
-    \item Possibly: flow at consumers
+    \item Temperature and pressure at the produers
+    \item Possibly: mass flux at consumers (by reducing/increasing power)
   \end{itemize}
 \end{frame}
 
@@ -198,6 +246,17 @@
     \item Possibilities of reducing problem space in case of discrete optimizations
       \vspace{1em}
     \item What other already techniques for identifying the structure of (electrical) networks may apply
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Challenges}
+  \begin{itemize}
+    \item Some nodes might be unknown
+      \begin{itemize}
+        \item Can this be ignored, since we only care about the simulation results?
+      \end{itemize}
+    \item Themperatures and velocities are only known at nodes adjacent to consumers
   \end{itemize}
 \end{frame}
 
