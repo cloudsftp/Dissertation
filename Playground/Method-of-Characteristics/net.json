@@ -1,0 +1,41 @@
+{
+    "nodes": [
+        {
+            "name": "producer",
+            "energy": 1,
+            "constant": true
+        },
+        {
+            "name": "node",
+            "energy": 0
+        },
+        {
+            "name": "consumer1",
+            "energy": 0
+        },
+        {
+            "name": "consumer2",
+            "energy": 0
+        }
+    ],
+    "edges": [
+        {
+            "source": 0,
+            "target": 1,
+            "length": 1,
+            "mass_flux": 1
+        },
+        {
+            "source": 1,
+            "target": 2,
+            "length": 1,
+            "mass_flux": 0.75
+        },
+        {
+            "source": 1,
+            "target": 3,
+            "length": 1,
+            "mass_flux": 0.25
+        }
+    ]
+}
