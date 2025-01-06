@@ -5,7 +5,8 @@
 
 \usepackage[dvipsnames]{xcolor}
 
-\usepackage{cite}
+\usepackage{biblatex}
+\bibliography{../../../references.bib}
 
 %Information to be included in the title page:
 \title{Understanding the Structure of District Heating Networks from Measurement Data}
@@ -30,101 +31,100 @@
   \end{itemize}
 \end{frame}
 
-%\begin{frame}
-%\frametitle{Influence of the Structure (Outdated Procedure)}
-%  \begin{figure}
-%    \begin{tikzpicture}
-%      \node (A) [rectangle, draw, rounded corners] at (0, 2) {
-%        \begin{tabular}{c}
-%          \color{ForestGreen}
-%          Inputs \\
-%          \color{ForestGreen}
-%          Demands \\
-%          \color{Orange}
-%          Network Structure
-%        \end{tabular}
-%      };
-%      \node (B) [rectangle, draw, rounded corners] at (1, 0) {
-%        Flow of Matter
-%      };
-%      \node (C) [rectangle, draw, rounded corners] at (0, -2) {
-%        \begin{tabular}{c}
-%          Flow of Heat \\
-%          $\Rightarrow$ \color{RoyalBlue} Changing Temperature at Consumers
-%        \end{tabular}
-%      };
-%
-%      \draw[->] (A) to [out=310, in=90]  (B) node [midway, right, xshift=30, yshift=20]  {\tiny{affects}};
-%      \draw[->] (A) to [out=230, in=135] (C) node [midway, left, xshift=-35]             {\tiny{affects}};
-%      \draw[->] (B) to [out=270, in=50]  (C) node [midway, right, xshift=30, yshift=-20] {\tiny{affects}};
-%    \end{tikzpicture}
-%  \end{figure}
-%
-%  Computation split for efficiency
-%\end{frame}
-%
-
 \begin{frame}
-\frametitle{Influence of the Structure (Current Procedure)}
+\frametitle{State of the Art Simulation}
   \begin{figure}
     \begin{tikzpicture}
-      \node (A) [rectangle, draw, rounded corners] at (0, 1.5) {
+      \node (A) [rectangle, draw, rounded corners] at (0, 1.2) {
         \begin{tabular}{c}
           \color{ForestGreen}
-          Inputs \\
-          \color{ForestGreen}
-          Demands \\
-          \color{Orange}
           Network Structure
         \end{tabular}
       };
-      \node (B) [rectangle, draw, rounded corners] at (0, -1.5) {
+      \node (B) [rectangle, draw, rounded corners] at (0, -1.2) {
         \begin{tabular}{c}
-          Flow of Matter \\
-          Flow of Heat \\
-          $\Rightarrow$ \color{RoyalBlue} Changing Temperature at Consumers
+          \color{RoyalBlue}
+          Changing Temperature at Consumers
         \end{tabular}
       };
 
-      \draw[->] (A) to (B) node [midway, right, xshift=5] {\tiny{compute}};
+      \draw[->] (A) to (B) node [midway, right, xshift=5] {\tiny{compute}}
+        node [midway, right, rectangle, draw, rounded corners, xshift=40] {\tiny{
+          \begin{tabular}{c}
+            Flow of Matter \\
+            Flow of Heat
+          \end{tabular}
+        }}
+        node [midway, left, rectangle, draw, rounded corners, xshift=-10] {\tiny{
+          \begin{tabular}{c}
+            \color{ForestGreen}
+            Inputs \\
+            \color{ForestGreen}
+            Demands \\
+          \end{tabular}
+        }};
     \end{tikzpicture}
   \end{figure}
 \end{frame}
 
 \begin{frame}
 \frametitle{Identifying the Structure --- Goal}
-  Somehow compute in the other direction
-
-  \vspace{1em}
-
   \begin{figure}
     \begin{tikzpicture}
-      \node (A) [rectangle, draw, rounded corners] at (0, 1.5) {
+      \node (A) [rectangle, draw, rounded corners] at (0, 1.2) {
         \begin{tabular}{c}
-          \color{ForestGreen}
-          Inputs \\
-          \color{ForestGreen}
-          Demands \\
           \color{Orange}
           Network Structure
         \end{tabular}
       };
-      \node (B) [rectangle, draw, rounded corners] at (0, -1.5) {
+      \node (B) [rectangle, draw, rounded corners] at (0, -1.2) {
         \begin{tabular}{c}
-          Flow of Matter \\
-          Flow of Heat \\
-          $\Rightarrow$ \color{RoyalBlue} Changing Temperature at Consumers
+          \color{ForestGreen}
+          Changing Temperature at Consumers
         \end{tabular}
       };
 
-      \draw[<->] (A) to (B) node [midway, right, xshift=5] {\tiny{compute}};
+      \draw[<-] (A) to (B) node [midway, right, xshift=5] {\tiny{compute}}
+        node [midway, right, rectangle, draw, rounded corners, xshift=40] {\tiny{
+          \begin{tabular}{c}
+            Flow of Matter \\
+            Flow of Heat
+          \end{tabular}
+        }}
+        node [midway, left, rectangle, draw, rounded corners, xshift=-10] {\tiny{
+          \begin{tabular}{c}
+            \color{ForestGreen}
+            Inputs \\
+            \color{ForestGreen}
+            Demands \\
+          \end{tabular}
+        }};
     \end{tikzpicture}
   \end{figure}
 
   \vspace{1em}
 
-  Forward computation requires finding loops in the structure.
-  This seems very hard to reverse, since not a simple function.
+  Somehow compute in the other direction
+\end{frame}
+
+\begin{frame}
+\frametitle{Simulation Details}
+  Can be split into two parts
+
+  \vspace{1em}
+
+  \begin{itemize}
+    \item Hydraulic (computes mass flux)
+      \begin{itemize}
+        \item Non-linear
+        \item Requires computing loops in the network
+      \end{itemize}
+    \item Thermal (computes heat based on mass flux)
+      \begin{itemize}
+        \item Basically linear
+        \item Influences the hydraulic problem in the next step
+      \end{itemize}
+  \end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -151,7 +151,7 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Identifying the Structure --- Approach I --- Possible Optimizations}
+\frametitle{Approach I --- Possible Optimizations}
   \begin{itemize}
     \item Use already computed loops to speed up computation of the loops in the new structure
     \item Reducing the problem space:
@@ -162,7 +162,6 @@
           \item Based on streets
         \end{itemize}
       \item Use heuristics to check most likely first
-      \item Group possible connections and disqalify whole groups early
     \end{itemize}
     \item Compute a initial guess with a linear heat/mass transfer model (based on~\cite{wang2024identification})
   \end{itemize}
@@ -171,10 +170,10 @@
 \begin{frame}
 \frametitle{Identifying the Structure --- Approach II}
   \begin{itemize}
-    \item Calculate possible velocities
-    \item Check whether velocities are plausible with supply and demand
+    \item Calculate possible connections and mass flux
+    \item Check whether mass flux is possible with supply and demand
     \begin{itemize}
-      \item Are these velocities a solution of the hydraulic problem?
+      \item Solution to the hydraulic problem?
     \end{itemize}
   \end{itemize}
 
@@ -205,23 +204,23 @@
   \end{figure}
 \end{frame}
 
-\begin{frame}
-\frametitle{Identifying the Structure --- Approach II --- Challenges}
-  \begin{itemize}
-    \item The change in flow (Vorlauf) temperature at the consumers leads to a change in velocity at the consumers, assuming constant power demand
-    \begin{itemize}
-      \item Introduces discontinuities because of possibly changing directions of mass flux
-      \item Makes the problem non-linear
-    \end{itemize}
-  \end{itemize}
-\end{frame}
+%\begin{frame}
+%\frametitle{Approach II --- Challenges}
+%  \begin{itemize}
+%    \item The change in flow (Vorlauf) temperature at the consumers leads to a change in velocity at the consumers, assuming constant power demand
+%    \begin{itemize}
+%      \item Introduces discontinuities because of possibly changing directions of mass flux
+%      \item Makes the problem non-linear
+%    \end{itemize}
+%  \end{itemize}
+%\end{frame}
 
 \begin{frame}
 \frametitle{Measurements and Signals}
   Measurements:
   \begin{itemize}
-    \item Temperature and mass flux at consumers
     \item Temperature and pressure at the producers
+    \item Temperature and mass flux at consumers
   \end{itemize}
 
   \vspace{2em}
@@ -234,14 +233,29 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{To be Determined}
+\frametitle{Challenges}
+  \begin{itemize}
+    \item Some nodes might be unknown
+      \begin{itemize}
+        \item Can this be ignored, since we only care about the simulation results?
+      \end{itemize}
+    \item Temperatures and mass flux are only known at nodes adjacent to consumers
+    \item Mass flux demand at consumers decreases when temperature increases
+      \begin{itemize}
+        \item Depend heavily on first increase of measured temperature
+        \item Extract useful information from that timing
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{To be Determined --- Loose Ideas}
   \begin{itemize}
     \item Useful signals to send into the network for most helpful data
       \begin{itemize}
         \item Pulse of temperature at producer
         \item Possibly: increse/decrease flow at a consumer
       \end{itemize}
-    \item Possibility of inversely computing connections
     \item Possibility of optimizing connections continuously
     \item Possibilities of reducing problem space in case of discrete optimizations
       \vspace{1em}
@@ -250,19 +264,7 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{Challenges}
-  \begin{itemize}
-    \item Some nodes might be unknown
-      \begin{itemize}
-        \item Can this be ignored, since we only care about the simulation results?
-      \end{itemize}
-    \item Themperatures and velocities are only known at nodes adjacent to consumers
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
 \frametitle{References}
-  \bibliographystyle{abbr}
-  \bibliography{../../../references.bib}
+  \printbibliography
 \end{frame}
 \end{document}
