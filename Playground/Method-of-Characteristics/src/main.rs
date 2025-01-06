@@ -1,4 +1,4 @@
-use std::{fs, io, ops::AddAssign};
+use std::{fs, io};
 
 use nalgebra::{DMatrix, DVector};
 
@@ -23,8 +23,19 @@ fn main() {
     let mut state = initial_state;
 
     for t in 0..10 {
+        println!("{}", state_string(t, &state));
         state = step(state, &network, DT);
     }
+}
+
+fn state_string(t: usize, state: &DVector<f64>) -> String {
+    let mut result = format!("{:4} ", t);
+
+    for value in state {
+        result.push_str(&format!("{:.6} ", value));
+    }
+
+    result
 }
 
 fn step(state: DVector<f64>, network: &definition::Network, dt: f64) -> DVector<f64> {
