@@ -17,6 +17,7 @@ fn main() {
         serde_json::from_reader(file).expect("could not decode network");
     dbg!(&network);
 
+    /*
     let initial_state = network.nodes.iter().map(|node| node.energy).collect();
     let initial_state = DVector::from_vec(initial_state);
 
@@ -26,6 +27,7 @@ fn main() {
         println!("{}", state_string(t, &state));
         state = step(state, &network, DT);
     }
+    */
 }
 
 fn state_string(t: usize, state: &DVector<f64>) -> String {
@@ -38,6 +40,7 @@ fn state_string(t: usize, state: &DVector<f64>) -> String {
     result
 }
 
+/*
 fn step(state: DVector<f64>, network: &definition::Network, dt: f64) -> DVector<f64> {
     let n = network.nodes.len();
 
@@ -82,3 +85,4 @@ fn step(state: DVector<f64>, network: &definition::Network, dt: f64) -> DVector<
 
     new_state
 }
+*/
