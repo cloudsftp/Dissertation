@@ -1,0 +1,58 @@
+\documentclass{scrartcl}
+
+\usepackage[a4paper, total={15cm, 25cm}]{geometry}
+
+\setlength{\parskip}{1em}
+\setlength{\parindent}{0em}
+
+\usepackage{amsmath}
+
+\usepackage{todonotes}
+\usepackage{acronym}
+
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+\usepackage[
+  style=numeric,
+]{biblatex}
+\addbibresource{../references.bib}
+
+\title{Identifying the Structure of \\ District Heating Networks}
+\subtitle{A Literature Review}
+\author{Fabian Weik}
+
+\begin{document}
+
+    \maketitle
+
+    \section{Introduction}
+
+    The information about the structure of \acp{DHN} is sometimes outdated or missing in part or completely.
+    But it is needed for precise simulation of such systems and subsequent optimization~\cite{adnetheat}.
+    Identifying the structure of \acp{DHN} is therefore of high interest.
+
+    Unfortunately, there is no literature on the identification of the structure of \acp{DHN}.
+    However the identification of the parameters of pipes in \acp{DHN} is documented well in the literature.
+    So is the identification of the structure of electrical \acp{PDN}.
+    This is helpful, since both \acp{DHN} and electrical \acp{PDN} follow Kirchhoffs laws~\cite{Moser2016waterelectricitysimilarity}.
+
+    We consider approaches used to both identifying the pipe parameters in \acp{DHN} and identifying the structure of electrical \acp{PDN}.
+    This article is structured as follows.
+    \Cref{sec:parameter-identification} compiles the literature on the identification of pipe parameters of \acp{DHN}, while \Cref{sec:structure-identification} focuses on the identification of the structure of electrical \acp{PDN}.
+
+    \section{Parameter Identification in \acp{DHN}}
+    \label{sec:parameter-identification}
+
+    \section{Structure Identification in \acp{PDN}}
+    \label{sec:structure-identification}
+
+    \printbibliography
+
+    \section{Acronyms}
+
+    \begin{acronym}
+        \acro{DHN}[DHN]{District Heating Network}
+        \acro{PDN}[PDN]{Power Distribution Network}
+    \end{acronym}
+\end{document}
