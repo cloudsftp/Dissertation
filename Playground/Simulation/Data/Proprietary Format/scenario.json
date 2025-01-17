@@ -1,0 +1,224 @@
+{
+    "settings": {
+        "feed_temperature [C]": 100,
+        "return_temperature [C]": 65,
+        "ground_temperature [C]": 10,
+        "t_start [d]": 0,
+        "t_end [d]": 3,
+        "dt [min]": 20,
+        "ramp [h]": 8,
+        "num_iter": 100,
+        "tol": 1e-06
+    },
+    "signals": {
+        "one": {
+            "type": "CONSTANT",
+            "axes": [
+                [
+                    "time",
+                    "min"
+                ],
+                [
+                    "scale",
+                    "1/h"
+                ]
+            ],
+            "unit_scale": 1,
+            "data": 1
+        },
+        "S1_pressure": {
+            "type": "CONSTANT",
+            "axes": [
+                [
+                    "time",
+                    "min"
+                ],
+                [
+                    "pressure",
+                    "Pa"
+                ]
+            ],
+            "unit_scale": 100000,
+            "data": 5
+        },
+        "S1_pressure_lift": {
+            "type": "CONSTANT",
+            "axes": [
+                [
+                    "time",
+                    "min"
+                ],
+                [
+                    "pressure",
+                    "Pa"
+                ]
+            ],
+            "unit_scale": 100000,
+            "data": 1
+        },
+        "S1_temperature": {
+            "type": "PIECEWISE_CUBIC",
+            "axes": [
+                [
+                    "time",
+                    "min"
+                ],
+                [
+                    "temperature",
+                    "C"
+                ]
+            ],
+            "unit_scale": 1,
+            "data": [
+                [
+                    0,
+                    100
+                ],
+                [
+                    500,
+                    90
+                ],
+                [
+                    1000,
+                    100
+                ],
+                [
+                    1500,
+                    120
+                ]
+            ]
+        },
+        "consumer_consumption_profile": {
+            "type": "PIECEWISE_CUBIC",
+            "axes": [
+                [
+                    "time",
+                    "min"
+                ],
+                [
+                    "scale",
+                    "1/h"
+                ]
+            ],
+            "unit_scale": 1,
+            "data": [
+                [
+                    0,
+                    0.8
+                ],
+                [
+                    500,
+                    0.9
+                ],
+                [
+                    1000,
+                    1.0
+                ],
+                [
+                    1500,
+                    0.8
+                ]
+            ]
+        },
+        "consumer_return_temperature_profile": {
+            "type": "CONSTANT",
+            "axes": [
+                [
+                    "time",
+                    "min"
+                ],
+                [
+                    "scale",
+                    "1/h"
+                ]
+            ],
+            "unit_scale": 1,
+            "data": 1
+        },
+        "temperature_drop_profile": {
+            "type": "CONSTANT",
+            "axes": [
+                [
+                    "time",
+                    "min"
+                ],
+                [
+                    "scale",
+                    "1/h"
+                ]
+            ],
+            "unit_scale": 1,
+            "data": 1
+        }
+    },
+    "inputs": {
+        "SRC": {
+            "signals": [
+                "S1_pressure",
+                "S1_pressure_lift",
+                "S1_temperature"
+            ]
+        },
+        "CON": {
+            "signals": [
+                "consumer_consumption_profile",
+                "consumer_return_temperature_profile",
+                "temperature_drop_profile"
+            ]
+        },
+        "default_pipe_input": {
+            "signals": [
+                "one",
+                "one",
+                "one",
+                "one",
+                "one"
+            ]
+        }
+    },
+    "consumers": {
+        "C1": {
+            "return_temperature": 65.0,
+            "input": "CON",
+            "annual_consumption": 25.0
+        }
+    },
+    "sources": {
+        "S1": {
+            "input": "SRC",
+            "type": "Source2"
+        }
+    },
+    "pipes": {
+        "PF1": {
+            "input": "default_pipe_input"
+        },
+        "PF2": {
+            "input": "default_pipe_input"
+        },
+        "PF3": {
+            "input": "default_pipe_input"
+        },
+        "PF4": {
+            "input": "default_pipe_input"
+        },
+        "PF5": {
+            "input": "default_pipe_input"
+        },
+        "PR1": {
+            "input": "default_pipe_input"
+        },
+        "PR2": {
+            "input": "default_pipe_input"
+        },
+        "PR3": {
+            "input": "default_pipe_input"
+        },
+        "PR4": {
+            "input": "default_pipe_input"
+        },
+        "PR5": {
+            "input": "default_pipe_input"
+        }
+    }
+}
