@@ -1,0 +1,50 @@
+% !TeX spellcheck = en_GB
+\documentclass[12pt, twoside, openright]{report}
+\def\MakeUppercaseUnsupportedInPdfStrings{\scshape}
+
+\include{commands/commands}
+\graphicspath{{figures/}}
+
+\usepackage[a4paper,width=150mm,top=25mm,bottom=25mm, bindingoffset=6mm]{geometry}
+\usepackage{hyperref}
+
+\begin{document}
+	\pagenumbering{roman}
+	\include{frontmatter/titlepage}
+	\cleardoublepage
+	\addcontentsline{toc}{chapter}{Acknowledgments}
+	\include{frontmatter/acknwldg}
+	\cleardoublepage
+	\addcontentsline{toc}{chapter}{Abstract}
+	\include{frontmatter/abstract}
+	\cleardoublepage
+	\addcontentsline{toc}{chapter}{Zusammenfassung}
+	\include{frontmatter/zusammenfassung}
+	\cleardoublepage
+	\addcontentsline{toc}{chapter}{Publications}
+	\include{frontmatter/publications}
+	\cleardoublepage
+	\tableofcontents
+	\cleardoublepage
+	%\listoffigures
+	%\listoftables
+	\pagenumbering{arabic}
+
+
+	\include{chapters/one}
+	\cleardoublepage
+	%\addcontentsline{toc}{chapter}{Appendix A}
+	%\include{chapters/appendixA}
+	%\cleardoublepage
+	\addcontentsline{toc}{chapter}{References}
+	\bibliographystyle{siamplain}
+	\renewcommand{\bibname}{References}
+	\bibliography{../references.bib}
+	%\bibliography{/p/tv/DISS_Baeck/diary/bib/literature_db}
+	%\cleardoublepage
+	%\addcontentsline{toc}{chapter}{Academic Curriculum Vitae}
+	%\include{endmatter/curriculum}
+	%\cleardoublepage
+	%\addcontentsline{toc}{chapter}{Akademischer Lebenslauf}
+	%\include{endmatter/lebenslauf}
+\end{document}
