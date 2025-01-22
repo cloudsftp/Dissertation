@@ -1,0 +1,196 @@
+{
+    "nodes": {
+        "F001": {
+            "position": [
+                100.0,
+                100.0,
+                0.0
+            ],
+            "is_feed": true
+        },
+        "F002": {
+            "position": [
+                200.0,
+                100.0,
+                0.0
+            ],
+            "is_feed": true
+        },
+        "F003": {
+            "position": [
+                100.0,
+                200.0,
+                0.0
+            ],
+            "is_feed": true
+        },
+        "F004": {
+            "position": [
+                200.0,
+                200.0,
+                0.0
+            ],
+            "is_feed": true
+        },
+        "R001": {
+            "position": [
+                100.0,
+                100.0,
+                0.0
+            ],
+            "is_feed": false
+        },
+        "R002": {
+            "position": [
+                200.0,
+                100.0,
+                0.0
+            ],
+            "is_feed": false
+        },
+        "R003": {
+            "position": [
+                100.0,
+                200.0,
+                0.0
+            ],
+            "is_feed": false
+        },
+        "R004": {
+            "position": [
+                200.0,
+                200.0,
+                0.0
+            ],
+            "is_feed": false
+        }
+    },
+    "pipes": {
+        "PF1": {
+            "length": 44.7,
+            "diameter": 25.0,
+            "transmittance": 2.0,
+            "roughness": 0.05,
+            "zeta": 0.3,
+            "nodes": [
+                "F001",
+                "F002"
+            ]
+        },
+        "PF2": {
+            "length": 44.7,
+            "diameter": 25.0,
+            "transmittance": 2.0,
+            "roughness": 0.05,
+            "zeta": 0.3,
+            "nodes": [
+                "F001",
+                "F003"
+            ]
+        },
+        "PF3": {
+            "length": 44.7,
+            "diameter": 25.0,
+            "transmittance": 2.0,
+            "roughness": 0.05,
+            "zeta": 0.3,
+            "nodes": [
+                "F001",
+                "F003"
+            ]
+        },
+        "PF4": {
+            "length": 44.7,
+            "diameter": 25.0,
+            "transmittance": 2.0,
+            "roughness": 0.05,
+            "zeta": 0.3,
+            "nodes": [
+                "F002",
+                "F004"
+            ]
+        },
+        "PF5": {
+            "length": 44.7,
+            "diameter": 25.0,
+            "transmittance": 2.0,
+            "roughness": 0.05,
+            "zeta": 0.3,
+            "nodes": [
+                "F003",
+                "F004"
+            ]
+        },
+        "PR1": {
+            "length": 44.7,
+            "diameter": 25.0,
+            "transmittance": 2.0,
+            "roughness": 0.05,
+            "zeta": 0.3,
+            "nodes": [
+                "R002",
+                "R001"
+            ]
+        },
+        "PR2": {
+            "length": 44.7,
+            "diameter": 25.0,
+            "transmittance": 2.0,
+            "roughness": 0.05,
+            "zeta": 0.3,
+            "nodes": [
+                "R003",
+                "R001"
+            ]
+        },
+        "PR3": {
+            "length": 44.7,
+            "diameter": 25.0,
+            "transmittance": 2.0,
+            "roughness": 0.05,
+            "zeta": 0.3,
+            "nodes": [
+                "R003",
+                "R001"
+            ]
+        },
+        "PR4": {
+            "length": 44.7,
+            "diameter": 25.0,
+            "transmittance": 2.0,
+            "roughness": 0.05,
+            "zeta": 0.3,
+            "nodes": [
+                "R004",
+                "R002"
+            ]
+        },
+        "PR5": {
+            "length": 44.7,
+            "diameter": 25.0,
+            "transmittance": 2.0,
+            "roughness": 0.05,
+            "zeta": 0.3,
+            "nodes": [
+                "R004",
+                "R003"
+            ]
+        }
+    },
+    "consumers": {
+        "C1": {
+            "nodes": [
+                "F004",
+                "R004"
+            ]
+        }
+    },
+    "sources": {
+        "S1": {
+            "nodes": [
+                "R001",
+                "F001"
+            ]
+        }
+    }
+}
