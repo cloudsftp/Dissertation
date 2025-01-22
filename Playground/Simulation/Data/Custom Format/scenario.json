@@ -1,0 +1,81 @@
+{
+    "settings": {
+        "feed_temperature": 100,
+        "return_temperature": 65,
+        "ground_temperature": 10,
+        "time_start": 0,
+        "time_end": 3,
+        "time_step": 20,
+        "ramp_time": 8,
+        "num_iterations": 100,
+        "tolerance": 1e-6
+    },
+    "signals": [
+        {
+            "name": "one",
+            "scale": 1,
+            "data": 1
+        },
+        {
+            "name": "S1_temperature",
+            "degree": 3,
+            "scale": 1,
+            "data": [
+                {
+                    "t": 0,
+                    "v": 100
+                },
+                {
+                    "t": 500,
+                    "v": 90
+                },
+                {
+                    "t": 1000,
+                    "v": 100
+                },
+                {
+                    "t": 1500,
+                    "v": 120
+                }
+            ]
+        }
+    ],
+    "inputs": [
+        {
+            "name": "SRC",
+            "signals": ["S1_pressure", "S1_pressure_lift", "S1_temperature"]
+        },
+        {
+            "name": "CON",
+            "signals": ["S1_pressure", "S1_pressure_lift", "S1_temperature"]
+        },
+        {
+            "name": "default_pipe_input",
+            "signals": ["one", "one", "one", "one", "one"]
+        }
+    ],
+    "consumers": [
+        {
+            "name": "C1",
+            "input": "CON",
+            "return_temperature": 65.0,
+            "annual_consumption": 25.0
+        }
+    ],
+    "sources": [
+        {
+            "name": "S1",
+            "input": "SRC"
+        }
+    ],
+    "pipes": [
+        {
+            "name": "PF1",
+            "input": "default_pipe_input"
+        },
+        {
+            "name": "PR1",
+            "input": "default_pipe_input"
+        }
+    ]
+}

@@ -1,12 +1,9 @@
 {
-    "topology": "system.json",
+    "topology": "topology.json",
     "scenario": "scenario.json",
     "io": "io.json",
     "ui_parameters": {
-        "color_limits_temperature": [
-            75,
-            120
-        ],
+        "color_limits_temperature": [75, 120],
         "start_date": "2023-04-22 08:00:00"
     },
     "results": "results/result"

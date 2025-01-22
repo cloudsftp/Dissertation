@@ -1,7 +1,24 @@
 module ProprietaryFormat
 using Serde
 
-function load(topology_file_path, scenario_file_path)
+struct Configuration
+    topology::String
+    scenario::String
+end
+
+function load(base_path, configuraion_file_name="main.json")
+    if !endswith(base_path, "/")
+        base_path *= "/"
+    end
+
+    config_file_path = base_path * configuraion_file_name
+    config = open(config_file_path) do config_file
+        deser_json(Configuration, read(config_file))
+    end
+
+    topology_file_path = base_path * config.topology
+    scenario_file_path = base_path * config.scenario
+
     topology = open(topology_file_path) do topology_file
         deser_json(Topology, read(topology_file))
     end
@@ -13,12 +30,13 @@ function load(topology_file_path, scenario_file_path)
     (topology, scenario)
 end
 
+# Topology
+
 struct Node
     position::Vector{Float64}
     is_feed::Bool
 end
 
-# Topology
 
 struct Pipe
     nodes::Vector{String}
@@ -91,6 +109,13 @@ struct Scenario
     consumers::Dict{String,ConsumerSignal}
     sources::Dict{String,SourceSignal}
     pipes::Dict{String,PipeSignal}
+end
+
+# bundle
+
+struct DistrictHeatingNetwork
+    topology::Topology
+    scenario::Scenario
 end
 
 end # module ProprietaryFormat

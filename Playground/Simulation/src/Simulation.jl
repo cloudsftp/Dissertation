@@ -1,14 +1,14 @@
 module Simulation
 
 include("ProprietaryFormat.jl")
+include("CustomFormat.jl")
 
 function load()
     base_path = "./Data/Proprietary Format"
+    @show ProprietaryFormat.load(base_path)
 
-    topology_file_path = base_path * "/topology.json"
-    scenario_file_path = base_path * "/scenario.json"
-
-    @show ProprietaryFormat.load(topology_file_path, scenario_file_path)
+    base_path = "./Data/Custom Format"
+    @show CustomFormat.load(base_path)
 end
 
 
