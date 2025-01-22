@@ -62,7 +62,7 @@ struct Signal
     type::String
     axes::Vector{Vector{String}}
     unit_scale::Float64
-    data::Union{Int64,Float64,Vector{Vector{Float64}}}
+    data::Any # TODO ::Union{Float64, Vector{Vector{Float64}}}
 end
 
 struct Input
@@ -77,11 +77,11 @@ end
 
 struct SourceSignal
     type::String
-    signal::String
+    input::String
 end
 
 struct PipeSignal
-    signal::String
+    input::String
 end
 
 struct Scenario
@@ -92,6 +92,5 @@ struct Scenario
     sources::Dict{String,SourceSignal}
     pipes::Dict{String,PipeSignal}
 end
-
 
 end # module ProprietaryFormat
