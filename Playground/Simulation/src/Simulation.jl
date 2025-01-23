@@ -1,5 +1,7 @@
 module Simulation
 
+using Serde
+
 include("ProprietaryFormat.jl")
 include("CustomFormat.jl")
 
@@ -8,7 +10,9 @@ function load()
     @show ProprietaryFormat.load(base_path)
 
     base_path = "./Data/Custom Format"
-    @show CustomFormat.load(base_path)
+    dhn = CustomFormat.load(base_path)
+
+    @show to_json(dhn.scenario)
 end
 
 

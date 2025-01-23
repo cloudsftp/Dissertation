@@ -18,7 +18,7 @@ function load(base_path)
         deser_json(Scenario, read(scenario_file))
     end
 
-    (topology, scenario)
+    DistrictHeatingNetwork(topology, scenario)
 end
 
 # Topology
@@ -79,22 +79,16 @@ struct Settings # TODO: investigate which settings I don't need
     tolerance::Float64
 end
 
-struct SignalConst
-    name::String
-    scale::Float64
-    data::Float64
-end
-
 struct DataPoint
     t::Float64
     v::Float64
 end
 
-struct SignalPoly
+struct Signal
     name::String
-    degree::UInt8
+    degree::Union{UInt8,Nothing}
     scale::Float64
-    data::Vector{DataPoint}
+    data::Union{Float64,Vector{DataPoint}}
 end
 
 struct Input
@@ -116,11 +110,30 @@ end
 
 struct Scenario
     settings::Settings
-    signals::Vector{Union{SignalConst,SignalPoly}} # TODO: figure out this union shit
+    signals::Vector{Signal}
     inputs::Vector{Input}
     consumers::Vector{ConsumerInputMapping}
     sources::Vector{InputMapping}
     pipes::Vector{InputMapping}
+end
+
+function Serde.deser(
+    ::Type{<:Signal},
+    ::Type{<:Union{Float64,Vector{DataPoint}}},
+    x,
+)
+    try
+        Serde.deser(Vector{DataPoint}, x)
+    catch
+        Serde.deser(Float64, x)
+    end
+end
+
+#
+
+struct DistrictHeatingNetwork
+    topology::Topology
+    scenario::Scenario
 end
 
 end # module CustomFormat
