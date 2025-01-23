@@ -4,7 +4,9 @@ authors = ["Fabian Weik <fabian.weik@protonmail.com>"]
 version = "0.1.0"
 
 [deps]
+MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
 Serde = "db9b398d-9517-45f8-9a95-92af99003e0e"
 
 [compat]
+MLStyle = "0.4.17"
 Serde = "3.5.0"

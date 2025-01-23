@@ -37,7 +37,6 @@ struct Node
     is_feed::Bool
 end
 
-
 struct Pipe
     nodes::Vector{String}
     length::Float64
@@ -51,7 +50,7 @@ struct Consumer
     nodes::Vector{String}
 end
 
-struct Producer
+struct Source
     nodes::Vector{String}
 end
 
@@ -59,7 +58,7 @@ struct Topology
     nodes::Dict{String,Node}
     pipes::Dict{String,Pipe}
     consumers::Dict{String,Consumer}
-    sources::Dict{String,Producer}
+    sources::Dict{String,Source}
 end
 
 # Scenario
@@ -80,7 +79,19 @@ struct Signal
     type::String
     axes::Vector{Vector{String}}
     unit_scale::Float64
-    data::Any # TODO ::Union{Float64, Vector{Vector{Float64}}}
+    data::Union{Float64,Vector{Vector{Float64}}}
+end
+
+function Serde.deser(
+    ::Type{<:Signal},
+    ::Type{<:Union{Float64,Vector{Vector{Float64}}}},
+    value,
+)
+    try
+        Serde.deser(Vector{Vector{Float64}}, value)
+    catch
+        Serde.deser(Float64, value)
+    end
 end
 
 struct Input
