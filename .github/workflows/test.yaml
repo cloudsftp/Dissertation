@@ -17,7 +17,9 @@ jobs:
           version: "1"
           arch: x64
       - uses: julia-actions/cache@v2
-      # - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-buildpkg@v1
+        with:
+          project: "Playgroud/Simulation"
       - uses: julia-actions/julia-runtest@v1
         with:
-          project: "@./Playgroud/Simulation"
+          project: "Playgroud/Simulation"
