@@ -1,0 +1,23 @@
+name: Run tests
+
+on: push
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+          arch: x64
+      - uses: julia-actions/cache@v2
+      # - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+        with:
+          project: ./Playgroud/Simulation
