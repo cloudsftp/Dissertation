@@ -1,3 +1,3 @@
-using Simulation
+include("src/Simulation.jl")
 
-load()
+Simulation.load()

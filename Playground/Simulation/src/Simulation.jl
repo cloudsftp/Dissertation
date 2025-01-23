@@ -4,7 +4,6 @@ using Serde
 
 include("config/Configuration.jl")
 
-
 function load()
     base_path = "./Data/Proprietary Format"
     (topology, scenario) = Configuration.ProprietaryFormat.load(base_path)
@@ -17,8 +16,5 @@ function load()
 
     @show Configuration.to_custom(scenario.pipes)
 end
-
-
-export load
 
 end # module Simulation
