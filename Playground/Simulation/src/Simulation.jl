@@ -15,7 +15,7 @@ function load()
 
     #@show to_json(scenario)
 
-    @show Configuration.to_custom(scenario.signals)
+    @show Configuration.to_custom(scenario.pipes)
 end
 
 
