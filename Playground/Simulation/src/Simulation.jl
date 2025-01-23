@@ -6,13 +6,13 @@ include("ProprietaryFormat.jl")
 include("CustomFormat.jl")
 
 function load()
-    base_path = "./Data/Proprietary Format"
-    @show ProprietaryFormat.load(base_path)
+    #base_path = "./Data/Proprietary Format"
+    #@show ProprietaryFormat.load(base_path)
 
     base_path = "./Data/Custom Format"
-    dhn = CustomFormat.load(base_path)
+    (; topology, scenario) = CustomFormat.load(base_path)
 
-    @show to_json(dhn.scenario)
+    @show to_json(scenario)
 end
 
 

@@ -84,11 +84,17 @@ struct DataPoint
     v::Float64
 end
 
-struct Signal
+struct SignalConst
     name::String
-    degree::Union{UInt8,Nothing}
     scale::Float64
-    data::Union{Float64,Vector{DataPoint}}
+    data::Float64
+end
+
+struct SignalPoly
+    name::String
+    degree::UInt8
+    scale::Float64
+    data::Vector{DataPoint}
 end
 
 struct Input
@@ -110,7 +116,7 @@ end
 
 struct Scenario
     settings::Settings
-    signals::Vector{Signal}
+    signals::Vector{Union{SignalConst,SignalPoly}}
     inputs::Vector{Input}
     consumers::Vector{ConsumerInputMapping}
     sources::Vector{InputMapping}
@@ -118,14 +124,15 @@ struct Scenario
 end
 
 function Serde.deser(
-    ::Type{<:Signal},
-    ::Type{<:Union{Float64,Vector{DataPoint}}},
-    x,
+    ::Type{<:Scenario},
+    ::Type{<:Vector{Union{SignalConst,SignalPoly}}},
+    list,
 )
+    list .|> element ->
     try
-        Serde.deser(Vector{DataPoint}, x)
+        Serde.deser(SignalPoly, element)
     catch
-        Serde.deser(Float64, x)
+        Serde.deser(SignalConst, element)
     end
 end
 
