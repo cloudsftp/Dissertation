@@ -1,6 +1,7 @@
 module CustomFormat
 
 using Serde
+using AutoHashEquals
 
 function load(base_path)
     if !endswith(base_path, "/")
@@ -79,25 +80,25 @@ struct Settings # TODO: investigate which settings I don't need
     tolerance::Float64
 end
 
-struct DataPoint
-    t::Float64
-    v::Float64
-end
-
 struct SignalConst
     name::String
     scale::Float64
     data::Float64
 end
 
-struct SignalPoly
+struct DataPoint
+    t::Float64
+    v::Float64
+end
+
+@auto_hash_equals struct SignalPoly
     name::String
     degree::UInt8
     scale::Float64
     data::Vector{DataPoint}
 end
 
-struct Input
+@auto_hash_equals struct Input
     name::String
     signals::Vector{String}
 end

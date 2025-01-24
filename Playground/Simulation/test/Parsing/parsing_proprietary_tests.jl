@@ -1,11 +1,6 @@
-using Serde
-
-function test_json_deser(json, expected)
-    @test deser_json(typeof(expected), json) == expected
-end
+include("json.jl")
 
 @testset "no exception when parsing proprietary configuration example" begin
-
     base_path = "../Data/Proprietary Format"
     @test try
         (topology, scenario) = Simulation.Configuration.ProprietaryFormat.load(base_path)
