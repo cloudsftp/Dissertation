@@ -68,6 +68,96 @@ end
     )
 end
 
+@testset "correctly parsing proprietary settings" begin
+    test_json_deser(
+        """{
+            "feed_temperature [C]": 120,
+            "return_temperature [C]": 60.,
+            "ground_temperature [C]": 1e0,
+            "t_start [d]": 0,
+            "t_end [d]": 2.4,
+            "dt [min]": 15,
+            "ramp [h]": 8,
+            "num_iter": 1000,
+            "tol": 1e-12
+        }""",
+        Simulation.Configuration.ProprietaryFormat.Settings(
+            120, 60, 1,
+            0, 2.4, 15, 8,
+            1000, 1e-12,
+        )
+    )
+end
+
+@testset "correctly parsing proprietary signal" begin
+    test_json_deser(
+        """{
+            "type": "CONSTANT",
+            "axes": [["time", "min"], ["pressure", "Pa"]],
+            "unit_scale": 10e6,
+            "data": 1
+        }""",
+        Simulation.Configuration.ProprietaryFormat.Signal(
+            "CONSTANT",
+            [["time", "min"], ["pressure", "Pa"]],
+            10e6, 1.,
+        )
+    )
+
+    test_json_deser(
+        """{
+            "type": "PIECEWISE_CUBIC",
+            "axes": [["time", "min"], ["pressure", "Pa"]],
+            "unit_scale": 10e6,
+            "data": [[0, 1], [1, 2], [3, -1]]
+        }""",
+        Simulation.Configuration.ProprietaryFormat.Signal(
+            "PIECEWISE_CUBIC",
+            [["time", "min"], ["pressure", "Pa"]],
+            10e6, [[0., 1.], [1., 2.], [3., -1.]],
+        )
+    )
+end
+
+@testset "correctly parsing proprietary input" begin
+    test_json_deser(
+        """{
+            "signals": ["A", "B"]
+        }""",
+        Simulation.Configuration.ProprietaryFormat.Input(["A", "B"])
+    )
+end
+
+@testset "correctly parsing proprietary consumer signal" begin
+    test_json_deser(
+        """{
+            "return_temperature": 60,
+            "annual_consumption": 2,
+            "input": "input1"
+        }""",
+        Simulation.Configuration.ProprietaryFormat.ConsumerSignal(60, 2, "input1")
+    )
+end
+
+@testset "correctly parsing proprietary source signal" begin
+    test_json_deser(
+        """{
+            "type": "Source2",
+            "input": "input1"
+        }""",
+        Simulation.Configuration.ProprietaryFormat.SourceSignal("Source2", "input1")
+    )
+end
+
+@testset "correctly parsing proprietary pipe signal" begin
+    test_json_deser(
+        """{
+            "input": "input1"
+        }""",
+        Simulation.Configuration.ProprietaryFormat.PipeSignal("input1")
+    )
+end
+
 @testset "no exception when parsing custom configuration example" begin
     base_path = "../Data/Custom Format"
     @test try

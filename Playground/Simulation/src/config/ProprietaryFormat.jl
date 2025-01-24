@@ -76,7 +76,7 @@ end
     tolerance::Float64 | "tol"
 end
 
-struct Signal
+@auto_hash_equals struct Signal
     type::String
     axes::Vector{Vector{String}}
     unit_scale::Float64
@@ -95,7 +95,7 @@ function Serde.deser(
     end
 end
 
-struct Input
+@auto_hash_equals struct Input
     signals::Vector{String}
 end
 
