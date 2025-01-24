@@ -8,17 +8,23 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        julia-version: ['1.11']
+        julia-arch: [x64]
+        os: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
-          version: 1
-          arch: x64
+          version: ${{ matrix.julia-version }}
+          arch: ${{ matrix.julia-arch }}
+      - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
-        with:
-          project: Playgroud/Simulation
+      #  with:
+      #    project: Playgroud/Simulation
       - uses: julia-actions/julia-runtest@v1
         with:
           project: Playgroud/Simulation
