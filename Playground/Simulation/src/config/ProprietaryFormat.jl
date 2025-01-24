@@ -1,5 +1,6 @@
 module ProprietaryFormat
 using Serde
+using AutoHashEquals
 
 struct Configuration
     topology::String
@@ -32,12 +33,12 @@ end
 
 # Topology
 
-struct Node
+@auto_hash_equals struct Node
     position::Vector{Float64}
     is_feed::Bool
 end
 
-struct Pipe
+@auto_hash_equals struct Pipe
     nodes::Vector{String}
     length::Float64
     diameter::Float64
@@ -46,15 +47,15 @@ struct Pipe
     zeta::Float64
 end
 
-struct Consumer
+@auto_hash_equals struct Consumer
     nodes::Vector{String}
 end
 
-struct Source
+@auto_hash_equals struct Source
     nodes::Vector{String}
 end
 
-struct Topology
+@auto_hash_equals struct Topology
     nodes::Dict{String,Node}
     pipes::Dict{String,Pipe}
     consumers::Dict{String,Consumer}
