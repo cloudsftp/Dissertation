@@ -59,7 +59,7 @@ struct Source
     tgt::String
 end
 
-struct Topology
+@auto_hash_equals struct Topology
     nodes::Vector{Node}
     pipes::Vector{Pipe}
     consumers::Vector{Consumer}
