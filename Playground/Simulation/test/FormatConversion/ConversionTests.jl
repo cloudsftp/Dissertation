@@ -1,3 +1,3 @@
 @testset "converting to custom format" begin
-    include("to_custom_tests.jl")
+    include("ToCustomTests.jl")
 end
