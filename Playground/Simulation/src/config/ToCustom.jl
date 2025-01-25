@@ -117,14 +117,18 @@ function to_custom(
                 CustomFormat.SignalPoly(name, degree, signal.unit_scale, data)
             end
 
-            @match signal.type begin
-                "CONSTANT" => begin
-                    CustomFormat.SignalConst(name, signal.unit_scale, signal.data)
+            try
+                @match signal.type begin
+                    "CONSTANT" => begin
+                        CustomFormat.SignalConst(name, signal.unit_scale, signal.data)
+                    end
+                    "PIECEWISE_CONSTANT" => create_poly_signal(0)
+                    "PIECEWISE_LINEAR" => create_poly_signal(1)
+                    "PIECEWISE_QUADRATIC" => create_poly_signal(2)
+                    "PIECEWISE_CUBIC" => create_poly_signal(3)
                 end
-                "PIECEWISE_CONSTANT" => create_poly_signal(0)
-                "PIECEWISE_LINEAR" => create_poly_signal(1)
-                "PIECEWISE_QUADRATIC" => create_poly_signal(2)
-                "PIECEWISE_CUBIC" => create_poly_signal(3)
+            catch e
+                throw(ErrorException("signal type \"" * signal.type * "\" unknown"))
             end
         end,
         signals,

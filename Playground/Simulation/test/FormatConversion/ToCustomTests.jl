@@ -3,14 +3,7 @@ const CF = Simulation.Configuration.CustomFormat
 
 using Simulation.Configuration: to_custom
 
-function assert_equals_unordered(expected::CF.Topology, actual::CF.Topology)
-    assert_equals_unordered(expected.nodes, actual.nodes)
-    assert_equals_unordered(expected.pipes, actual.pipes)
-    assert_equals_unordered(expected.consumers, actual.consumers)
-    assert_equals_unordered(expected.sources, actual.sources)
-end
-
-function assert_equals_unordered(expected::Vector, actual::Vector)
+function assert_equals_unordered(actual::Vector, expected::Vector)
     @test length(expected) == length(actual)
 
     @test all(
@@ -34,6 +27,13 @@ end
     assert_equals_unordered([1, 2, 3], [1, 2, 3])
     assert_equals_unordered([1, 2, 3], [1, 3, 2])
     assert_equals_unordered([1, 2, 2, 3], [1, 2, 3, 2])
+end
+
+function assert_equals_unordered(actual::CF.Topology, expected::CF.Topology)
+    assert_equals_unordered(expected.nodes, actual.nodes)
+    assert_equals_unordered(expected.pipes, actual.pipes)
+    assert_equals_unordered(expected.consumers, actual.consumers)
+    assert_equals_unordered(expected.sources, actual.sources)
 end
 
 @testset "convert topology to custom format"  begin
@@ -88,5 +88,115 @@ end
         [CF.Source("S1", "VL004", "VL001")],
     )
 
-    assert_equals_unordered(expected, actual)
+    assert_equals_unordered(actual, expected)
+end
+
+function assert_equals_unordered(actual::CF.Scenario, expected::CF.Scenario)
+    @test expected.settings == actual.settings
+
+    assert_equals_unordered(expected.signals, actual.signals)
+    assert_equals_unordered(expected.inputs, actual.inputs)
+    assert_equals_unordered(expected.consumers, actual.consumers)
+    assert_equals_unordered(expected.sources, actual.sources)
+    assert_equals_unordered(expected.pipes, actual.pipes)
+end
+
+@testset "convert topology to custom format"  begin
+    proprietary_scenario = PF.Scenario(
+        PF.Settings(
+            100, 60, 10,
+            0, 4.8, 15, 8,
+            1000, 1e-6,
+        ),
+        Dict(
+            "one" => PF.Signal(
+                "CONSTANT",
+                [["time", "min"], ["pressure", "Pa"]],
+                1, 1.,
+            ),
+            "signal1" => PF.Signal(
+                "PIECEWISE_CUBIC",
+                [["time", "min"], ["pressure", "Pa"]],
+                1,
+                [
+                    [0., 1.],
+                    [5., 5.],
+                    [10., 3.],
+                ]
+            ),
+        ),
+        Dict(
+            "input1" => PF.Input(["one", "signal1"]),
+        ),
+        Dict(
+            "C1" => PF.ConsumerSignal(60, 2, "input1"),
+        ),
+        Dict(
+            "S1" => PF.SourceSignal("Source2", "input1"),
+        ),
+        Dict(
+            "PF001" => PF.PipeSignal("input1"),
+            "PF002" => PF.PipeSignal("input1"),
+            "PF003" => PF.PipeSignal("input1"),
+            "PF004" => PF.PipeSignal("input1"),
+        ),
+    )
+    actual = to_custom(proprietary_scenario)
+
+    expected = CF.Scenario(
+        CF.Settings(
+            100, 60, 10,
+            0, 4.8, 15, 8,
+            1000, 1e-6,
+        ),
+        [
+            CF.SignalConst(
+                "one", 1, 1.,
+            ),
+            CF.SignalPoly(
+                "signal1", 3, 1,
+                [
+                    CF.DataPoint(0., 1.),
+                    CF.DataPoint(5., 5.),
+                    CF.DataPoint(10., 3.),
+                ]
+            ),
+        ],
+        [
+            CF.Input("input1", ["one", "signal1"]),
+        ],
+        [
+            CF.ConsumerInputMapping(
+                "C1", "input1", 60, 2,
+            ),
+        ],
+        [
+            CF.InputMapping("S1", "input1"),
+        ],
+        [
+            CF.InputMapping("PF001", "input1"),
+            CF.InputMapping("PF002", "input1"),
+            CF.InputMapping("PF003", "input1"),
+            CF.InputMapping("PF004", "input1"),
+        ]
+    )
+
+    assert_equals_unordered(actual, expected)
+end
+
+@testset "quick check" begin
+    signals = Dict(
+        "signal1" => PF.Signal(
+            "CUBIC",
+            [["time", "min"], ["pressure", "Pa"]],
+            1,
+            [
+                [0., 1.],
+                [5., 5.],
+                [10., 3.],
+            ]
+        ),
+    )
+
+    @test_throws "signal type \"CUBIC\" unknown" to_custom(signals)
 end
