@@ -1,0 +1,3 @@
+[submodule "Monthly"]
+	path = Monthly
+	url = git@gist.github.com:2225d6799113a3c849b56761cc5f124f.git
