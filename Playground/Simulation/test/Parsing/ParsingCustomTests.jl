@@ -1,7 +1,9 @@
+const CF = Simulation.Configuration.CustomFormat
+
 @testset "no exception when parsing custom configuration example" begin
     base_path = "../Data/Custom Format"
     @test try
-        dhn = Simulation.Configuration.CustomFormat.load(base_path)
+        CF.load(base_path)
         true
     catch e
         @show e
@@ -20,13 +22,7 @@ end
             },
             "feed": true
         }""",
-        Simulation.Configuration.CustomFormat.Node(
-            "A",
-            Simulation.Configuration.CustomFormat.Position(
-                100, 100, 10,
-            ),
-            true,
-        ),
+        CF.Node("A", CF.Position(100, 100, 10), true),
     )
 end
 
@@ -42,9 +38,7 @@ end
             "src": "nodeA",
             "tgt": "nodeB"
         }""",
-        Simulation.Configuration.CustomFormat.Pipe(
-            "pipe1", 100, 2, 3, 4, 5, "nodeA", "nodeB",
-        )
+        CF.Pipe("pipe1", 100, 2, 3, 4, 5, "nodeA", "nodeB")
     )
 end
 
@@ -55,9 +49,7 @@ end
             "src": "nodeA",
             "tgt": "nodeB"
         }""",
-        Simulation.Configuration.CustomFormat.Consumer(
-            "consumer1", "nodeA", "nodeB",
-        )
+        CF.Consumer("consumer1", "nodeA", "nodeB")
     )
 end
 
@@ -68,9 +60,7 @@ end
             "src": "nodeA",
             "tgt": "nodeB"
         }""",
-        Simulation.Configuration.CustomFormat.Source(
-            "source1", "nodeA", "nodeB",
-        )
+        CF.Source("source1", "nodeA", "nodeB")
     )
 end
 
@@ -87,7 +77,7 @@ end
             "num_iterations": 1000,
             "tolerance": 1e-6
         }""",
-        Simulation.Configuration.CustomFormat.Settings(
+        CF.Settings(
             120, 60, 1,
             0, 2.4, 15, 8,
             1000, 1e-6,
@@ -102,9 +92,7 @@ end
             "scale": 1e6,
             "data": 1
         }""",
-        Simulation.Configuration.CustomFormat.SignalConst(
-            "signal1", 1e6, 1,
-        )
+        CF.SignalConst("signal1", 1e6, 1)
     )
 end
 
@@ -116,12 +104,12 @@ end
             "scale": 1e6,
             "data": [[0, 1], [1, 2]]
         }""",
-        Simulation.Configuration.CustomFormat.SignalPoly(
+        CF.SignalPoly(
             "signal1", 1, 1e6, [
                 Simulation.Configuration.CustomFormat.DataPoint(0, 1),
                 Simulation.Configuration.CustomFormat.DataPoint(1, 2),
             ],
-        )
+        ),
     )
 end
 
@@ -131,9 +119,7 @@ end
             "name": "input1",
             "signals": ["signal1", "one"]
         }""",
-        Simulation.Configuration.CustomFormat.Input(
-            "input1", ["signal1", "one"],
-        )
+        CF.Input("input1", ["signal1", "one"]),
     )
 end
 
@@ -145,9 +131,7 @@ end
             "return_temperature": 60,
             "annual_consumption": 2
         }""",
-        Simulation.Configuration.CustomFormat.ConsumerInputMapping(
-            "consumer1", "input1", 60, 2,
-        )
+        CF.ConsumerInputMapping("consumer1", "input1", 60, 2),
     )
 end
 
@@ -157,8 +141,6 @@ end
             "name": "consumer1",
             "input": "input1"
         }""",
-        Simulation.Configuration.CustomFormat.InputMapping(
-            "consumer1", "input1",
-        )
+        CF.InputMapping("consumer1", "input1"),
     )
 end

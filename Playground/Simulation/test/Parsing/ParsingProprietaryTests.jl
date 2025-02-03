@@ -1,9 +1,11 @@
+const PF = Simulation.Configuration.ProprietaryFormat
+
 include("json.jl")
 
 @testset "no exception when parsing proprietary configuration example" begin
     base_path = "../Data/Proprietary Format"
     @test try
-        (topology, scenario) = Simulation.Configuration.ProprietaryFormat.load(base_path)
+        PF.load(base_path)
         true
     catch e
         @show e
@@ -17,7 +19,7 @@ end
             "topology": "a",
             "scenario": "b"
         }""",
-        Simulation.Configuration.ProprietaryFormat.Configuration("a", "b"),
+        PF.Configuration("a", "b"),
     )
 end
 
@@ -27,7 +29,7 @@ end
             "position": [100.0, 2, 3],
             "is_feed": true
         }""",
-        Simulation.Configuration.ProprietaryFormat.Node([100, 2, 3], true),
+        PF.Node([100, 2, 3], true),
     )
 end
 
@@ -41,7 +43,7 @@ end
             "roughness": 4,
             "zeta": 5
         }""",
-        Simulation.Configuration.ProprietaryFormat.Pipe(["A", "B"], 1, 2, 3, 4, 5),
+        PF.Pipe(["A", "B"], 1, 2, 3, 4, 5),
     )
 end
 
@@ -50,7 +52,7 @@ end
         """{
             "nodes": ["A", "B"]
         }""",
-        Simulation.Configuration.ProprietaryFormat.Consumer(["A", "B"])
+        PF.Consumer(["A", "B"]),
     )
 end
 
@@ -59,7 +61,7 @@ end
         """{
             "nodes": ["A", "B"]
         }""",
-        Simulation.Configuration.ProprietaryFormat.Source(["A", "B"])
+        PF.Source(["A", "B"]),
     )
 end
 
@@ -76,11 +78,11 @@ end
             "num_iter": 1000,
             "tol": 1e-12
         }""",
-        Simulation.Configuration.ProprietaryFormat.Settings(
+        PF.Settings(
             120, 60, 1,
             0, 2.4, 15, 8,
             1000, 1e-12,
-        )
+        ),
     )
 end
 
@@ -92,11 +94,11 @@ end
             "unit_scale": 10e6,
             "data": 1
         }""",
-        Simulation.Configuration.ProprietaryFormat.Signal(
+        PF.Signal(
             "CONSTANT",
             [["time", "min"], ["pressure", "Pa"]],
             10e6, 1.,
-        )
+        ),
     )
 
     test_json_deser(
@@ -106,11 +108,11 @@ end
             "unit_scale": 10e6,
             "data": [[0, 1], [1, 2], [3, -1]]
         }""",
-        Simulation.Configuration.ProprietaryFormat.Signal(
+        PF.Signal(
             "PIECEWISE_CUBIC",
             [["time", "min"], ["pressure", "Pa"]],
             10e6, [[0., 1.], [1., 2.], [3., -1.]],
-        )
+        ),
     )
 end
 
@@ -119,7 +121,7 @@ end
         """{
             "signals": ["A", "B"]
         }""",
-        Simulation.Configuration.ProprietaryFormat.Input(["A", "B"])
+        PF.Input(["A", "B"]),
     )
 end
 
@@ -130,7 +132,7 @@ end
             "annual_consumption": 2,
             "input": "input1"
         }""",
-        Simulation.Configuration.ProprietaryFormat.ConsumerSignal(60, 2, "input1")
+        PF.ConsumerSignal(60, 2, "input1"),
     )
 end
 
@@ -140,7 +142,7 @@ end
             "type": "Source2",
             "input": "input1"
         }""",
-        Simulation.Configuration.ProprietaryFormat.SourceSignal("Source2", "input1")
+        PF.SourceSignal("Source2", "input1"),
     )
 end
 
@@ -149,6 +151,6 @@ end
         """{
             "input": "input1"
         }""",
-        Simulation.Configuration.ProprietaryFormat.PipeSignal("input1")
+        PF.PipeSignal("input1"),
     )
 end
