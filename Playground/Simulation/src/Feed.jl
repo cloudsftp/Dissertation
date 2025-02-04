@@ -1,3 +1,11 @@
+struct Pipe
+# TODO: custom type for local usage
+end
+
+struct Node
+# TODO: custom type for local usage
+end
+
 struct Consumer
     name::String
     node::String
@@ -15,7 +23,7 @@ struct FeedTopology
     consumers::Vector{Consumer}
 end
 
-function calculate_feed(topology)
+function compute_feed(topology::Configuration.CustomFormat.Topology)
     node_pipes = Dict()
     for node in topology.nodes
         node_pipes[node.name] = Set()
@@ -33,13 +41,17 @@ function calculate_feed(topology)
         push!(source_nodes, source.tgt)
     end
 
+    if length(source_nodes) == 0
+        throw(ErrorException("no sources present"))
+    end
+
     start_node = rand(source_nodes)
-    feed_pipe_names = Set()
-    visited_nodes = Set()
+    feed_pipe_names::Set{String} = Set()
+    visited_nodes::Set{String} = Set()
     collect_feed!(feed_pipe_names, visited_nodes, start_node, node_pipes, pipe_indices, topology)
 
     if !(source_nodes ⊆ visited_nodes)
-        throw(ErrorException("not all source nodes were visited"))
+        throw(ErrorException("source nodes not visited: " * string(setdiff(source_nodes, visited_nodes))))
     end
 
     consumer_nodes = Set()
@@ -48,10 +60,29 @@ function calculate_feed(topology)
     end
 
     if !(consumer_nodes ⊆ visited_nodes)
-        throw(ErrorException("consumer nodes not visited: " * (consumer_nodes \ visited_nodes)))
+        throw(ErrorException("consumer nodes not visited: " * string(setdiff(consumer_nodes, visited_nodes))))
     end
 
+    build_feed_topology(feed_pipe_names, visited_nodes, topology)
+end
 
+function collect_feed!(feed_pipe_names, visited_nodes, current_node, node_pipes, pipe_indices, topology)
+    for pipe_name in node_pipes[current_node]
+        if pipe_name in feed_pipe_names
+            continue
+        end
+
+        push!(feed_pipe_names, pipe_name)
+
+        pipe = topology.pipes[pipe_indices[pipe_name]]
+        next_node = Configuration.CustomFormat.get_other_node(pipe, current_node)
+        collect_feed!(feed_pipe_names, visited_nodes, next_node, node_pipes, pipe_indices, topology)
+    end
+
+    push!(visited_nodes, current_node)
+end
+
+function build_feed_topology(feed_pipe_names::Set{String}, visited_nodes::Set{String}, topology)
     pipes = []
     for pipe in topology.pipes
         if pipe.name in feed_pipe_names
@@ -77,22 +108,4 @@ function calculate_feed(topology)
     end
 
     FeedTopology(pipes, nodes, sources, consumers)
-end
-
-export calculate_feed
-
-function collect_feed!(feed_pipe_names, visited_nodes, current_node, node_pipes, pipe_indices, topology)
-    for pipe_name in node_pipes[current_node]
-        if pipe_name in feed_pipe_names
-            continue
-        end
-
-        push!(feed_pipe_names, pipe_name)
-
-        pipe = topology.pipes[pipe_indices[pipe_name]]
-        next_node = Configuration.CustomFormat.get_other_node(pipe, current_node)
-        collect_feed!(feed_pipe_names, visited_nodes, next_node, node_pipes, pipe_indices, topology)
-    end
-
-    push!(visited_nodes, current_node)
 end

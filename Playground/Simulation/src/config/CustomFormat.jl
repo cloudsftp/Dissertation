@@ -57,7 +57,6 @@ function get_other_node(pipe::Pipe, node::String)
     end
 end
 
-
 struct Consumer
     name::String
     src::String

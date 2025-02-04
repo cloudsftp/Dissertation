@@ -1,6 +1,3 @@
-const PF = Simulation.Configuration.ProprietaryFormat
-const CF = Simulation.Configuration.CustomFormat
-
 using Simulation.Configuration: to_custom
 
 function assert_equals_unordered(actual::Vector, expected::Vector)

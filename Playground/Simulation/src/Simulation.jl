@@ -3,7 +3,6 @@ module Simulation
 using Serde
 
 include("config/Configuration.jl")
-
 include("Feed.jl")
 
 function load()
@@ -14,7 +13,7 @@ function load()
     base_path = "./Data/Custom Format"
     (; topology, scenario) = Configuration.CustomFormat.load(base_path)
 
-    @show calculate_feed(topology)
+    @show compute_feed(topology)
 end
 
 end # module Simulation
