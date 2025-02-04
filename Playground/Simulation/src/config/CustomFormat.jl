@@ -47,6 +47,17 @@ struct Pipe
     tgt::String
 end
 
+function get_other_node(pipe::Pipe, node::String)
+    if pipe.src == node
+        pipe.tgt
+    elseif pipe.tgt == node
+        pipe.src
+    else
+        throw(ErrorException("pipe " * pipe * " does not connect to node " * node))
+    end
+end
+
+
 struct Consumer
     name::String
     src::String

@@ -62,15 +62,15 @@
     "consumers": [
         {
             "name": "C1",
-            "src": "F02",
-            "tgt": "R02"
+            "src": "F002",
+            "tgt": "R002"
         }
     ],
     "sources": [
         {
             "name": "S1",
-            "src": "R01",
-            "tgt": "F01"
+            "src": "R001",
+            "tgt": "F001"
         }
     ]
 }
