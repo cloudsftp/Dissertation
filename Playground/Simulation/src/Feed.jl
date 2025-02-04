@@ -1,9 +1,9 @@
 struct Pipe
-# TODO: custom type for local usage
+    # TODO: custom type for local usage
 end
 
 struct Node
-# TODO: custom type for local usage
+    # TODO: custom type for local usage
 end
 
 struct Consumer

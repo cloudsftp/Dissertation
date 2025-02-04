@@ -4,6 +4,7 @@ using Serde
 
 include("config/Configuration.jl")
 include("Feed.jl")
+include("SpanningTree.jl")
 
 function load()
     #base_path = "./Data/Proprietary Format"
