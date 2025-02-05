@@ -37,7 +37,7 @@ function test_spanning_tree(
     )
 
     tree = find_spanning_tree(feed)
-    @test tree == expected
+    @test tree == Set(expected)
 end
 
 @testset "single pipe" begin
@@ -69,6 +69,6 @@ end
             create_pipe("PF002", "F001", "F003"),
             create_pipe("PF003", "F002", "F003"),
         ],
-        ["PF001", "PF003"],
+        ["PF001", "PF002"],
     )
 end

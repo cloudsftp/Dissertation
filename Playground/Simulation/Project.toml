@@ -5,10 +5,12 @@ version = "0.1.0"
 
 [deps]
 AutoHashEquals = "15f4f7f2-30c1-5605-9d31-71845cf9641f"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
 Serde = "db9b398d-9517-45f8-9a95-92af99003e0e"
 
 [compat]
 AutoHashEquals = "2.2.0"
+DataStructures = "0.18.20"
 MLStyle = "0.4.17"
 Serde = "3.5.0"

@@ -1,11 +1,15 @@
-function find_spanning_tree(topology::FeedTopology)
-    node_pipes::Dict{String, Vector{String}} = Dict()
-    for node in topology.nodes
+using .Configuration.CustomFormat: get_other_node
+
+using DataStructures
+
+function find_spanning_tree(feed::FeedTopology)
+    node_pipes = Dict{String, Vector{String}}()
+    for node in feed.nodes
         node_pipes[node.name] = []
     end
 
-    pipe_indices::Dict{String, Int} = Dict()
-    for (i, pipe) in enumerate(topology.pipes)
+    pipe_indices = Dict{String, Int}()
+    for (i, pipe) in enumerate(feed.pipes)
         if !(pipe.src in keys(node_pipes) && pipe.tgt in keys(node_pipes))
             throw(ErrorException("pipe " * string(pipe) * " is connected to non-existant node"))
         end
@@ -15,37 +19,41 @@ function find_spanning_tree(topology::FeedTopology)
         push!(node_pipes[pipe.tgt], pipe.name)
     end
 
-    if length(topology.nodes) == 0
+    if length(feed.nodes) == 0
         throw(ErrorException("feed network does not have any nodes"))
     end
 
-    start_node = topology.nodes[1].name
+    spanning_tree = Set{String}()
 
-    spanning_tree::Vector{String} = []
-    visited_nodes::Set{String} = Set()
-    collect_spanning_tree!(spanning_tree, visited_nodes, start_node, node_pipes, pipe_indices, topology)
+    start_node = feed.nodes[1].name
+    work = Queue{Tuple{String, String}}()
 
-    spanning_tree
-end
+    function enqueue_work_items!(node::String)
+        for pipe in node_pipes[node]
+            if pipe in spanning_tree
+                continue
+            end
 
-function collect_spanning_tree!(
-    spanning_tree::Vector{String},
-    visited_nodes::Set{String},
-    current_node::String,
-    node_pipes::Dict{String, Vector{String}},
-    pipe_indices::Dict{String, Int},
-    topology::FeedTopology,
-)
-    push!(visited_nodes, current_node)
+            enqueue!(work, (node, pipe))
+        end
+    end
 
-    for pipe_name in node_pipes[current_node]
-        pipe = topology.pipes[pipe_indices[pipe_name]]
-        next_node = Configuration.CustomFormat.get_other_node(pipe, current_node)
+    enqueue_work_items!(start_node)
+    visited_nodes = Set{String}([start_node])
+
+    while !isempty(work)
+        (current_node, pipe_name) = dequeue!(work)
+
+        pipe = feed.pipes[pipe_indices[pipe_name]]
+        next_node = get_other_node(pipe, current_node)
         if next_node in visited_nodes
             continue
         end
 
         push!(spanning_tree, pipe_name)
-        collect_spanning_tree!(spanning_tree, visited_nodes, next_node, node_pipes, pipe_indices, topology)
+        push!(visited_nodes, next_node)
+        enqueue_work_items!(next_node)
     end
+
+    spanning_tree
 end
