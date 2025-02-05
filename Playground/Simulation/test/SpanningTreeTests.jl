@@ -72,3 +72,21 @@ end
         ["PF001", "PF002"],
     )
 end
+
+@testset "two cycles" begin
+    test_spanning_tree(
+        map(string, 1:8),
+        [
+            create_pipe("P1", "1", "2"),
+            create_pipe("P2", "2", "3"),
+            create_pipe("P3", "3", "4"),
+            create_pipe("P4", "3", "5"),
+            create_pipe("P5", "4", "6"),
+            create_pipe("P6", "5", "6"),
+            create_pipe("P7", "6", "7"),
+            create_pipe("P8", "7", "8"),
+            create_pipe("P9", "8", "2"),
+        ],
+        map(n -> "P" * string(n), [1, 2, 3, 4, 5, 8, 9]),
+    )
+end
