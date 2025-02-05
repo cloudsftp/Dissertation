@@ -24,6 +24,8 @@ function find_spanning_tree(feed::FeedTopology)
     end
 
     spanning_tree = Set{String}()
+    cycles = Set{String}()
+    pred = Dict{String, String}()
 
     start_node = feed.nodes[1].name
     work = Queue{Tuple{String, String}}()
@@ -47,13 +49,16 @@ function find_spanning_tree(feed::FeedTopology)
         pipe = feed.pipes[pipe_indices[pipe_name]]
         next_node = get_other_node(pipe, current_node)
         if next_node in visited_nodes
+            push!(cycles, pipe_name)
             continue
         end
 
         push!(spanning_tree, pipe_name)
+        pred[next_node] = current_node
+
         push!(visited_nodes, next_node)
         enqueue_work_items!(next_node)
     end
 
-    spanning_tree
+    (spanning_tree, cycles, pred)
 end

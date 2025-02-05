@@ -25,7 +25,7 @@ end
 function test_spanning_tree(
     nodes::Vector{String},
     pipes::Vector{CF.Pipe},
-    expected::Vector{String},
+    expected_tree::Vector{String},
 )
     nodes = map(create_node, nodes)
 
@@ -36,8 +36,12 @@ function test_spanning_tree(
         [],
     )
 
-    tree = find_spanning_tree(feed)
-    @test tree == Set(expected)
+    (tree, cycles, _) = find_spanning_tree(feed)
+    @test tree == Set(expected_tree)
+
+    expected_cycles = Set(map(pipe -> pipe.name, pipes)) |>
+        all_edges -> setdiff(all_edges, expected_tree)
+    @test cycles == expected_cycles
 end
 
 @testset "single pipe" begin
@@ -88,5 +92,20 @@ end
             create_pipe("P9", "8", "2"),
         ],
         map(n -> "P" * string(n), [1, 2, 3, 4, 5, 8, 9]),
+    )
+end
+
+@testset "deo cycles" begin
+    test_spanning_tree(
+        map(string, 1:5),
+        [
+            create_pipe("P1", "1", "3"),
+            create_pipe("P2", "1", "2"),
+            create_pipe("P3", "2", "3"),
+            create_pipe("P4", "2", "4"),
+            create_pipe("P5", "3", "4"),
+            create_pipe("P6", "3", "5"),
+        ],
+        map(n -> "P" * string(n), [1, 2, 5, 6]),
     )
 end
