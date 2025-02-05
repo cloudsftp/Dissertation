@@ -1,5 +1,3 @@
-const CF = Simulation.Configuration.CustomFormat
-
 @testset "no exception when parsing custom configuration example" begin
     base_path = "../Data/Custom Format"
     @test try

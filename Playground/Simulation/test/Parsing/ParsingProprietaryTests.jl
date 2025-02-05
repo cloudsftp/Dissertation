@@ -1,5 +1,3 @@
-const PF = Simulation.Configuration.ProprietaryFormat
-
 include("json.jl")
 
 @testset "no exception when parsing proprietary configuration example" begin

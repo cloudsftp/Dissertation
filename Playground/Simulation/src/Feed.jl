@@ -17,8 +17,8 @@ struct Source
 end
 
 struct FeedTopology
-    pipes::Vector{Configuration.CustomFormat.Pipe}
     nodes::Vector{Configuration.CustomFormat.Node}
+    pipes::Vector{Configuration.CustomFormat.Pipe}
     sources::Vector{Source}
     consumers::Vector{Consumer}
 end
@@ -83,17 +83,17 @@ function collect_feed!(feed_pipe_names, visited_nodes, current_node, node_pipes,
 end
 
 function build_feed_topology(feed_pipe_names::Set{String}, visited_nodes::Set{String}, topology)
-    pipes = []
-    for pipe in topology.pipes
-        if pipe.name in feed_pipe_names
-            push!(pipes, pipe)
-        end
-    end
-
     nodes = []
     for node in topology.nodes
         if node.name in visited_nodes
             push!(nodes, node)
+        end
+    end
+
+    pipes = []
+    for pipe in topology.pipes
+        if pipe.name in feed_pipe_names
+            push!(pipes, pipe)
         end
     end
 
@@ -107,5 +107,5 @@ function build_feed_topology(feed_pipe_names::Set{String}, visited_nodes::Set{St
         push!(consumers, Consumer(consumer.name, consumer.src))
     end
 
-    FeedTopology(pipes, nodes, sources, consumers)
+    FeedTopology(nodes, pipes, sources, consumers)
 end
