@@ -2,8 +2,6 @@ using Test
 
 using Simulation: compute_feed
 
-const position = CF.Position(0.0, 0.0, 0.0)
-
 include("dummy_network.jl")
 
 function assert_feed_pipes(topology, expected_fee_pipe_names::Vector{String})

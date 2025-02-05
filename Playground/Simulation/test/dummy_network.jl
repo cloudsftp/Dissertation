@@ -1,5 +1,11 @@
+const position = CF.Position(0.0, 0.0, 0.0)
+
 function create_node(name::String, feed::Bool)
     CF.Node(name, position, feed)
+end
+
+function create_node(name::String)
+    create_node(name, true)
 end
 
 function create_source(name::String, tgt::String)

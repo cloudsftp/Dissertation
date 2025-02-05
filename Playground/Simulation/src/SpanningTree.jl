@@ -19,7 +19,7 @@ function find_spanning_tree(topology::FeedTopology)
         throw(ErrorException("feed network does not have any nodes"))
     end
 
-    start_node = rand(map(node -> node.name, topology.nodes))
+    start_node = topology.nodes[1].name
 
     spanning_tree::Vector{String} = []
     visited_nodes::Set{String} = Set()
@@ -32,11 +32,11 @@ function collect_spanning_tree!(
     spanning_tree::Vector{String},
     visited_nodes::Set{String},
     current_node::String,
-    node_pipes::Dict{String, String},
+    node_pipes::Dict{String, Vector{String}},
     pipe_indices::Dict{String, Int},
     topology::FeedTopology,
 )
-    push!(current_node, visited_nodes)
+    push!(visited_nodes, current_node)
 
     for pipe_name in node_pipes[current_node]
         pipe = topology.pipes[pipe_indices[pipe_name]]
