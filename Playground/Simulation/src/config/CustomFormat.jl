@@ -59,6 +59,8 @@ end
 
 struct Consumer
     name::String
+    yearly_power_demand::Float64
+    normal_return_temperature::Float64
     src::String
     tgt::String
 end

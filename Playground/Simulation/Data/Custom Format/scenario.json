@@ -4,17 +4,50 @@
         "return_temperature": 65,
         "ground_temperature": 10,
         "time_start": 0,
-        "time_end": 3,
-        "time_step": 20,
+        "time_end": 1,
+        "time_step": 5,
         "ramp_time": 8,
         "num_iterations": 100,
         "tolerance": 1e-6
     },
     "signals": [
         {
-            "name": "one",
+            "name": "C1_power",
+            "degree": 1,
+            "scale": 1,
+            "data": [
+                {
+                    "t": 0,
+                    "v": 0.4
+                },
+                {
+                    "t": 5,
+                    "v": 0.6
+                },
+                {
+                    "t": 10,
+                    "v": 0.8
+                },
+                {
+                    "t": 15,
+                    "v": 0.7
+                }
+            ]
+        },
+        {
+            "name": "C1_return_temperature",
             "scale": 1,
             "data": 1
+        },
+        {
+            "name": "S1_base_pressure",
+            "scale": 100000,
+            "data": 5
+        },
+        {
+            "name": "S1_pressure_lift",
+            "scale": 100000,
+            "data": 4.5
         },
         {
             "name": "S1_temperature",
@@ -23,19 +56,19 @@
             "data": [
                 {
                     "t": 0,
-                    "v": 100
-                },
-                {
-                    "t": 500,
-                    "v": 90
-                },
-                {
-                    "t": 1000,
-                    "v": 100
-                },
-                {
-                    "t": 1500,
                     "v": 120
+                },
+                {
+                    "t": 5,
+                    "v": 110
+                },
+                {
+                    "t": 10,
+                    "v": 105
+                },
+                {
+                    "t": 15,
+                    "v": 110
                 }
             ]
         }

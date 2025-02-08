@@ -80,17 +80,54 @@ end
 function to_custom(
     (; settings, signals, inputs, consumers, sources, pipes)::ProprietaryFormat.Scenario,
 )
-    @debug "converting scenario to custom"
-    @show inputs
+    @debug "converting scenario to custom format"
+
+    consumers = Dict(
+        Iterators.map(pairs(consumers)) do (name, input)
+            name => input.input
+        end
+    )
+    consumer_inputs = Set(values(consumers))
+
+    sources = Dict(
+        Iterators.map(pairs(sources)) do (name, input)
+            name => input.input
+        end
+    )
+    source_inputs = Set(values(sources))
+
+    inputs = Dict(
+        Iterators.map(pairs(inputs)) do (name, input)
+            if name in consumer_inputs
+                @assert length(input.signals) >= 2
+
+                name => CustomFormat.ConsumerSignals(
+                    name,
+                    input.signals[1], # power
+                    input.signals[2], # return temperature
+                )
+            elseif name in source_inputs
+                @assert length(input.signals) >= 3
+
+                name => CustomFormat.SourceSignals(
+                    name,
+                    input.signals[1], # base pressure
+                    input.signals[2], # pressure_lift
+                    input.signals[3], # temperature
+                )
+            else
+                #throw(ErrorException("unused input '" * name * "'"))
+                nothing
+            end
+        end
+    )
 
     CustomFormat.Scenario(
         to_custom(settings),
         to_custom(signals),
         Dict(),
-        Dict(),
-        Dict(),
-        #to_custom(consumers),
-        #to_custom(sources),
+        consumers,
+        sources,
     )
 end
 

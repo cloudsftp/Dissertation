@@ -62,6 +62,8 @@
     "consumers": [
         {
             "name": "C1",
+            "yearly_power_demand": 300,
+            "normal_return_temperature": 60,
             "src": "F002",
             "tgt": "R002"
         }
