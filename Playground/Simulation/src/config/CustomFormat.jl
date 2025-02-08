@@ -113,38 +113,76 @@ end
     signals::Vector{String}
 end
 
-struct ConsumerInputMapping
+struct ConsumerSignals
     name::String
-    input::String
-    return_temperature::Float64
-    annual_consumption::Float64
+    power::String
+    return_temperature::String
 end
 
-struct InputMapping
+struct SourceSignals
     name::String
-    input::String
+    base_pressure::String
+    pressure_lift::String
+    temperature::String
 end
+
+#struct PipeSignals
+#    name::String
+#    length_signal::String
+#    diameter_signal::String
+#    transmittance_signal::String
+#    roughness_signal::String
+#    zeta_signal::String
+#end
 
 struct Scenario
     settings::Settings
-    signals::Vector{Union{SignalConst,SignalPoly}}
-    inputs::Vector{Input}
-    consumers::Vector{ConsumerInputMapping}
-    sources::Vector{InputMapping}
-    pipes::Vector{InputMapping}
+    signals::Dict{String,Union{SignalConst,SignalPoly}}
+    inputs::Dict{String,Union{ConsumerSignals,SourceSignals}}
+    consumer_inputs::Dict{String,String}
+    source_inputs::Dict{String,String}
 end
 
 function Serde.deser(
     ::Type{<:Scenario},
-    ::Type{<:Vector{Union{SignalConst,SignalPoly}}},
+    ::Type{<:Dict{String,Union{SignalConst,SignalPoly}}},
     list,
 )
-    list .|> element ->
-    try
-        Serde.deser(SignalPoly, element)
-    catch
-        Serde.deser(SignalConst, element)
+    list_to_dict(
+        signal -> signal["name"],
+        signal -> try
+            Serde.deser(SignalPoly, signal)
+        catch
+            Serde.deser(SignalConst, signal)
+        end,
+        list,
+    )
+end
+
+function Serde.deser(
+    ::Type{<:Scenario},
+    ::Type{<:Dict{String,Union{ConsumerSignals,SourceSignals}}},
+    list,
+)
+    list_to_dict(
+        input -> input["name"],
+        input -> try
+            Serde.deser(ConsumerSignals, input)
+        catch
+            Serde.deser(SourceSignals, input)
+        end,
+        list,
+    )
+end
+
+function list_to_dict(key, value, list)
+    result = Dict()
+
+    for element in list
+        result[key(element)] = value(element)
     end
+
+    result
 end
 
 #

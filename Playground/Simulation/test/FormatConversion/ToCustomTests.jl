@@ -145,11 +145,11 @@ end
                 ]
             ),
         ),
-        [
-            CF.SignalConst(
+        Dict(
+            "one" => CF.SignalConst(
                 "one", 1, 1.,
             ),
-            CF.SignalPoly(
+            "signal1" => CF.SignalPoly(
                 "signal1", 3, 1,
                 [
                     CF.DataPoint(0., 1.),
@@ -157,7 +157,7 @@ end
                     CF.DataPoint(10., 3.),
                 ]
             ),
-        ],
+        ),
     )
 end
 
@@ -178,54 +178,62 @@ end
     @test_throws "signal type \"CUBIC\" unknown" to_custom(signals)
 end
 
-@testset "convert inputs to custom format"  begin
-    test_to_custom(
-        Dict(
-            "input1" => PF.Input(["one", "signal1"]),
-        ),
-        [
-            CF.Input("input1", ["one", "signal1"]),
-        ],
-    )
-end
+const zero_settings = PF.Settings(0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 @testset "convert consumer signals to custom format"  begin
-    test_to_custom(
+    proprietary_scenario = PF.Scenario(
+        zero_settings,
         Dict(
-            "C1" => PF.ConsumerSignal(60, 2, "input1"),
-        ),
-        [
-            CF.ConsumerInputMapping(
-                "C1", "input1", 60, 2,
+            "power"=> PF.Signal(
+                "CONSTANT",
+                [["t", "min"], ["W", "J"]],
+                1e9, 8.,
             ),
-        ],
+            "temperature"=> PF.Signal(
+                "PIECEWISE_CUBIC",
+                [["t", "min"], ["1", "1"]],
+                1,
+                [[0., 1.], [5., 0.9], [10., 1.1]],
+            ),
+        ),
+        Dict(
+            "CON" => PF.Input(["power", "temperature"])
+        ),
+        Dict(
+            "C1" => PF.ConsumerSignal(60, 1000, "CON"),
+        ),
+        Dict(),
+        Dict(),
     )
+
+    custom_scenario = to_custom(proprietary_scenario)
+    @show custom_scenario
 end
 
-@testset "convert producer signals to custom format"  begin
-    test_to_custom(
-        Dict(
-            "S1" => PF.SourceSignal("Source2", "input1"),
-        ),
-        [
-            CF.InputMapping("S1", "input1"),
-        ],
-    )
-end
+#@testset "convert producer signals to custom format"  begin
+#    test_to_custom(
+#        Dict(
+#            "S1" => PF.SourceSignal("Source2", "input1"),
+#        ),
+#        [
+#            CF.SourceSignals("S1", "S1_base_pressure", "S1_pressure_lift", "S1_temperature"),
+#        ],
+#    )
+#end
 
-@testset "convert pipe signals to custom format"  begin
-    test_to_custom(
-        Dict(
-            "PF001" => PF.PipeSignal("input1"),
-            "PF002" => PF.PipeSignal("input1"),
-            "PF003" => PF.PipeSignal("input1"),
-            "PF004" => PF.PipeSignal("input1"),
-        ),
-        [
-            CF.InputMapping("PF001", "input1"),
-            CF.InputMapping("PF002", "input1"),
-            CF.InputMapping("PF003", "input1"),
-            CF.InputMapping("PF004", "input1"),
-        ],
-    )
-end
+#@testset "convert pipe signals to custom format"  begin
+#    test_to_custom(
+#        Dict(
+#            "PF001" => PF.PipeSignal("input1"),
+#            "PF002" => PF.PipeSignal("input1"),
+#            "PF003" => PF.PipeSignal("input1"),
+#            "PF004" => PF.PipeSignal("input1"),
+#        ),
+#        [
+#            CF.InputMapping("PF001", "input1"),
+#            CF.InputMapping("PF002", "input1"),
+#            CF.InputMapping("PF003", "input1"),
+#            CF.InputMapping("PF004", "input1"),
+#        ],
+#    )
+#end

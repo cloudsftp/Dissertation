@@ -121,24 +121,30 @@ end
     )
 end
 
-@testset "correctly parsing custom consumer input mapping" begin
+@testset "correctly parsing custom consumer signals" begin
     test_json_deser(
         """{
             "name": "consumer1",
-            "input": "input1",
-            "return_temperature": 60,
-            "annual_consumption": 2
+            "power": "C1_power",
+            "return_temperature": "C1_return_temperature"
         }""",
-        CF.ConsumerInputMapping("consumer1", "input1", 60, 2),
+        CF.ConsumerSignals("consumer1", "C1_power", "C1_return_temperature"),
     )
 end
 
-@testset "correctly parsing custom input mapping" begin
+@testset "correctly parsing custom source signals" begin
     test_json_deser(
         """{
-            "name": "consumer1",
-            "input": "input1"
+            "name": "source1",
+            "base_pressure": "S1_base_pressure",
+            "pressure_lift": "S1_pressure_lift",
+            "temperature": "S1_temperature"
         }""",
-        CF.InputMapping("consumer1", "input1"),
+        CF.SourceSignals(
+            "source1",
+            "S1_base_pressure",
+            "S1_pressure_lift",
+            "S1_temperature",
+        ),
     )
 end

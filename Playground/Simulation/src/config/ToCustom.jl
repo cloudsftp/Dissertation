@@ -80,13 +80,17 @@ end
 function to_custom(
     (; settings, signals, inputs, consumers, sources, pipes)::ProprietaryFormat.Scenario,
 )
+    @debug "converting scenario to custom"
+    @show inputs
+
     CustomFormat.Scenario(
         to_custom(settings),
         to_custom(signals),
-        to_custom(inputs),
-        to_custom(consumers),
-        to_custom(sources),
-        to_custom(pipes),
+        Dict(),
+        Dict(),
+        Dict(),
+        #to_custom(consumers),
+        #to_custom(sources),
     )
 end
 
@@ -105,22 +109,26 @@ end
 function to_custom(
     signals::Dict{String,ProprietaryFormat.Signal}
 )
-    dict_to_vec(
-        (name, signal) -> begin
-            create_poly_signal(degree) = begin
+    Dict(
+        Iterators.map(pairs(signals)) do (name, signal)
+            function create_poly_signal(degree)
                 data = signal.data .|> point -> begin
                     @assert length(point) == 2
 
                     CustomFormat.DataPoint(point[1], point[2])
                 end
 
-                CustomFormat.SignalPoly(name, degree, signal.unit_scale, data)
+                CustomFormat.SignalPoly(
+                    name, degree, signal.unit_scale, data,
+                )
             end
 
-            try
+            name => try
                 @match signal.type begin
                     "CONSTANT" => begin
-                        CustomFormat.SignalConst(name, signal.unit_scale, signal.data)
+                        CustomFormat.SignalConst(
+                            name, signal.unit_scale, signal.data,
+                        )
                     end
                     "PIECEWISE_CONSTANT" => create_poly_signal(0)
                     "PIECEWISE_LINEAR" => create_poly_signal(1)
@@ -130,59 +138,12 @@ function to_custom(
             catch e
                 throw(ErrorException("signal type \"" * signal.type * "\" unknown"))
             end
-        end,
-        signals,
-    )
-end
-
-function to_custom(
-    inputs::Dict{String,ProprietaryFormat.Input}
-)
-    dict_to_vec(
-        (name, (; signals)) -> begin
-            CustomFormat.Input(name, signals)
-        end,
-        inputs,
-    )
-end
-
-function to_custom(
-    consumers::Dict{String,ProprietaryFormat.ConsumerSignal}
-)
-    dict_to_vec(
-        (name, (; return_temperature, annual_consumption, input)) -> begin
-            CustomFormat.ConsumerInputMapping(
-                name, input, return_temperature, annual_consumption,
-            )
-        end,
-        consumers,
-    )
-end
-
-function to_custom(
-    sources::Dict{String,ProprietaryFormat.SourceSignal}
-)
-    dict_to_vec(
-        (name, (; type, input)) -> begin
-            CustomFormat.InputMapping(name, input)
-        end,
-        sources,
-    )
-end
-
-function to_custom(
-    pipes::Dict{String,ProprietaryFormat.PipeSignal}
-)
-    dict_to_vec(
-        (name, (; input)) -> begin
-            CustomFormat.InputMapping(name, input)
-        end,
-        pipes,
+        end
     )
 end
 
 function dict_to_vec(f, dict)
-    map(collect(dict)) do (; first, second)
-        f(first, second)
+    map(collect(dict)) do (key, value)
+        f(key, value)
     end
 end

@@ -42,40 +42,21 @@
     ],
     "inputs": [
         {
-            "name": "SRC",
-            "signals": ["S1_pressure", "S1_pressure_lift", "S1_temperature"]
+            "name": "CON_IN_1",
+            "power": "C1_power",
+            "return_temperature": "C1_return_temperature"
         },
         {
-            "name": "CON",
-            "signals": ["S1_pressure", "S1_pressure_lift", "S1_temperature"]
-        },
-        {
-            "name": "default_pipe_input",
-            "signals": ["one", "one", "one", "one", "one"]
+            "name": "SRC_IN_1",
+            "base_pressure": "S1_base_pressure",
+            "pressure_lift": "S1_pressure_lift",
+            "temperature": "S1_temperature"
         }
     ],
-    "consumers": [
-        {
-            "name": "C1",
-            "input": "CON",
-            "return_temperature": 65.0,
-            "annual_consumption": 25.0
-        }
-    ],
-    "sources": [
-        {
-            "name": "S1",
-            "input": "SRC"
-        }
-    ],
-    "pipes": [
-        {
-            "name": "PF1",
-            "input": "default_pipe_input"
-        },
-        {
-            "name": "PR1",
-            "input": "default_pipe_input"
-        }
-    ]
+    "consumer_inputs": {
+        "C1": "CON_IN_1"
+    },
+    "source_inputs": {
+        "S1": "SRC_IN_1"
+    }
 }
