@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -48,17 +50,94 @@ struct Topology {
     sources: Vec<Source>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct Settings {
+    feed_temperature: f64,
+    return_temperature: f64,
+    ground_temperature: f64,
+    time_start: f64,
+    time_end: f64,
+    time_step: f64,
+    ramp_time: f64,
+    num_iterations: usize,
+    tolerance: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct DataPoint {
+    t: f64,
+    v: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+enum Signal {
+    Const {
+        name: String,
+        scale: f64,
+        data: f64,
+    },
+    Poly {
+        name: String,
+        degree: usize,
+        scale: f64,
+        data: Vec<DataPoint>,
+    },
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+enum Input {
+    Consumer {
+        name: String,
+        demand: String,
+        return_temperature: String,
+    },
+    Source {
+        name: String,
+        base_pressure: String,
+        pressure_lift: String,
+        temperature: String,
+    },
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ConsumerSignalFactors {
+    yearly_demand: f64,
+    normal_return_temperature: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ConsumerInput {
+    input: String,
+    factors: ConsumerSignalFactors,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Scenario {
+    settings: Settings,
+    signals: Vec<Signal>,
+    inputs: Vec<Input>,
+    consumer_inputs: HashMap<String, ConsumerInput>,
+    source_inputs: HashMap<String, String>,
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
     use serde_json::from_reader;
-    use std::{fs, io::BufReader};
+    use std::fs;
 
     #[test]
-    fn no_error_parsing_custom_format() {
+    fn no_error_parsing_custom_format_topology() {
         let file = fs::File::open("data/custom_format/topology.json").expect("could not open file");
-        let reader = BufReader::new(file);
-        let topology: Topology = from_reader(reader).expect("could not parse topology json");
+        let _: Topology = from_reader(file).expect("could not parse topology json");
+    }
+
+    #[test]
+    fn no_error_parsing_custom_format_scenario() {
+        let file = fs::File::open("data/custom_format/scenario.json").expect("could not open file");
+        let _: Scenario = from_reader(file).expect("could not parse scenario json");
     }
 }

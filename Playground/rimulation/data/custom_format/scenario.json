@@ -12,7 +12,7 @@
     },
     "signals": [
         {
-            "name": "C1_power",
+            "name": "C1_demand",
             "degree": 1,
             "scale": 1,
             "data": [
@@ -76,7 +76,7 @@
     "inputs": [
         {
             "name": "CON_IN_1",
-            "power": "C1_power",
+            "demand": "C1_demand",
             "return_temperature": "C1_return_temperature"
         },
         {
@@ -90,7 +90,7 @@
         "C1": {
             "input": "CON_IN_1",
             "factors": {
-                "yearly_power_demand": 300,
+                "yearly_demand": 300,
                 "normal_return_temperature": 60
             }
         }
