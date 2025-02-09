@@ -59,8 +59,6 @@ end
 
 struct Consumer
     name::String
-    yearly_power_demand::Float64
-    normal_return_temperature::Float64
     src::String
     tgt::String
 end
@@ -110,11 +108,6 @@ end
     data::Vector{DataPoint}
 end
 
-@auto_hash_equals struct Input
-    name::String
-    signals::Vector{String}
-end
-
 struct ConsumerSignals
     name::String
     power::String
@@ -126,6 +119,21 @@ struct SourceSignals
     base_pressure::String
     pressure_lift::String
     temperature::String
+end
+
+struct UnknownSignals
+    name::String
+    signals::Vector{String}
+end
+
+struct ConsumerSignalFactors
+    yearly_power_demand::Float64
+    normal_return_temperature::Float64
+end
+
+struct ConsumerInput
+    input::String
+    factors::ConsumerSignalFactors
 end
 
 #struct PipeSignals
@@ -140,8 +148,8 @@ end
 struct Scenario
     settings::Settings
     signals::Dict{String,Union{SignalConst,SignalPoly}}
-    inputs::Dict{String,Union{ConsumerSignals,SourceSignals}}
-    consumer_inputs::Dict{String,String}
+    inputs::Dict{String,Union{ConsumerSignals,SourceSignals,UnknownSignals}}
+    consumer_inputs::Dict{String,ConsumerInput}
     source_inputs::Dict{String,String}
 end
 
@@ -163,7 +171,7 @@ end
 
 function Serde.deser(
     ::Type{<:Scenario},
-    ::Type{<:Dict{String,Union{ConsumerSignals,SourceSignals}}},
+    ::Type{<:Dict{String,Union{ConsumerSignals,SourceSignals,UnknownSignals}}},
     list,
 )
     list_to_dict(

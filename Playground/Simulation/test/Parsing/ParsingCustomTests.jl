@@ -104,20 +104,10 @@ end
         }""",
         CF.SignalPoly(
             "signal1", 1, 1e6, [
-                Simulation.Configuration.CustomFormat.DataPoint(0, 1),
-                Simulation.Configuration.CustomFormat.DataPoint(1, 2),
+                CF.DataPoint(0, 1),
+                CF.DataPoint(1, 2),
             ],
         ),
-    )
-end
-
-@testset "correctly parsing custom input" begin
-    test_json_deser(
-        """{
-            "name": "input1",
-            "signals": ["signal1", "one"]
-        }""",
-        CF.Input("input1", ["signal1", "one"]),
     )
 end
 
@@ -146,5 +136,18 @@ end
             "S1_pressure_lift",
             "S1_temperature",
         ),
+    )
+end
+
+@testset "correctly parsing custom consumer inputs" begin
+    test_json_deser(
+        """{
+            "input": "input1",
+            "factors": {
+                "yearly_power_demand": 300,
+                "normal_return_temperature": 60
+            }
+        }""",
+        CF.ConsumerInput("input1", CF.ConsumerSignalFactors(300, 60))
     )
 end

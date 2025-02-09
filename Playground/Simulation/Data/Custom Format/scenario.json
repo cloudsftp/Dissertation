@@ -87,7 +87,13 @@
         }
     ],
     "consumer_inputs": {
-        "C1": "CON_IN_1"
+        "C1": {
+            "input": "CON_IN_1",
+            "factors": {
+                "yearly_power_demand": 300,
+                "normal_return_temperature": 60
+            }
+        }
     },
     "source_inputs": {
         "S1": "SRC_IN_1"

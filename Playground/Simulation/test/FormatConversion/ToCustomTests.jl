@@ -81,7 +81,7 @@ end
     )
 end
 
-@testset "convert consumes to custom form" begin
+@testset "convert consumers to custom form" begin
     test_to_custom(
         Dict(
             "C1" => PF.Consumer(["VL004", "VL001"]),
@@ -180,16 +180,16 @@ end
 
 const zero_settings = PF.Settings(0, 0, 0, 0, 0, 0, 0, 0, 0)
 
-@testset "convert consumer signals to custom format"  begin
+@testset "convert consumer signals and inputs to custom format"  begin
     proprietary_scenario = PF.Scenario(
         zero_settings,
         Dict(
-            "power"=> PF.Signal(
+            "power" => PF.Signal(
                 "CONSTANT",
                 [["t", "min"], ["W", "J"]],
                 1e9, 8.,
             ),
-            "temperature"=> PF.Signal(
+            "temperature" => PF.Signal(
                 "PIECEWISE_CUBIC",
                 [["t", "min"], ["1", "1"]],
                 1,
@@ -200,14 +200,28 @@ const zero_settings = PF.Settings(0, 0, 0, 0, 0, 0, 0, 0, 0)
             "CON" => PF.Input(["power", "temperature"])
         ),
         Dict(
-            "C1" => PF.ConsumerSignal(60, 1000, "CON"),
+            "C1" => PF.ConsumerSignal(60, 300, "CON"),
         ),
         Dict(),
         Dict(),
     )
 
     custom_scenario = to_custom(proprietary_scenario)
-    @show custom_scenario
+
+    @test custom_scenario.signals == Dict(
+        "power" => CF.SignalConst("power", 1e9, 8),
+        "temperature" => CF.SignalPoly("temperature", 3, 1, [
+            CF.DataPoint(0, 1),
+            CF.DataPoint(5, 0.9),
+            CF.DataPoint(10, 1.1),
+        ]),
+    )
+    @test custom_scenario.inputs == Dict(
+        "CON" => CF.ConsumerSignals("CON", "power", "temperature")
+    )
+    @test custom_scenario.consumer_inputs == Dict(
+        "C1" => CF.ConsumerInput("CON", CF.ConsumerSignalFactors(300, 60)),
+    )
 end
 
 #@testset "convert producer signals to custom format"  begin
@@ -217,23 +231,6 @@ end
 #        ),
 #        [
 #            CF.SourceSignals("S1", "S1_base_pressure", "S1_pressure_lift", "S1_temperature"),
-#        ],
-#    )
-#end
-
-#@testset "convert pipe signals to custom format"  begin
-#    test_to_custom(
-#        Dict(
-#            "PF001" => PF.PipeSignal("input1"),
-#            "PF002" => PF.PipeSignal("input1"),
-#            "PF003" => PF.PipeSignal("input1"),
-#            "PF004" => PF.PipeSignal("input1"),
-#        ),
-#        [
-#            CF.InputMapping("PF001", "input1"),
-#            CF.InputMapping("PF002", "input1"),
-#            CF.InputMapping("PF003", "input1"),
-#            CF.InputMapping("PF004", "input1"),
 #        ],
 #    )
 #end

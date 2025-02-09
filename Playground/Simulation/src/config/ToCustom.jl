@@ -82,23 +82,30 @@ function to_custom(
 )
     @debug "converting scenario to custom format"
 
-    consumers = Dict(
+    consumer_inputs = Dict(
         Iterators.map(pairs(consumers)) do (name, input)
-            name => input.input
+            name => CustomFormat.ConsumerInput(
+                input.input, CustomFormat.ConsumerSignalFactors(
+                    input.annual_consumption,
+                    input.return_temperature,
+                )
+            )
         end
     )
-    consumer_inputs = Set(values(consumers))
+    consumer_input_names = Set(map(values(consumer_inputs)) do input
+        input.input
+    end)
 
-    sources = Dict(
+    source_inputs = Dict(
         Iterators.map(pairs(sources)) do (name, input)
             name => input.input
         end
     )
-    source_inputs = Set(values(sources))
+    source_input_names = Set(values(source_inputs))
 
     inputs = Dict(
         Iterators.map(pairs(inputs)) do (name, input)
-            if name in consumer_inputs
+            if name in consumer_input_names
                 @assert length(input.signals) >= 2
 
                 name => CustomFormat.ConsumerSignals(
@@ -106,7 +113,7 @@ function to_custom(
                     input.signals[1], # power
                     input.signals[2], # return temperature
                 )
-            elseif name in source_inputs
+            elseif name in source_input_names
                 @assert length(input.signals) >= 3
 
                 name => CustomFormat.SourceSignals(
@@ -116,8 +123,7 @@ function to_custom(
                     input.signals[3], # temperature
                 )
             else
-                #throw(ErrorException("unused input '" * name * "'"))
-                nothing
+                throw(ErrorException("unused input '" * name  * "'"))
             end
         end
     )
@@ -125,9 +131,9 @@ function to_custom(
     CustomFormat.Scenario(
         to_custom(settings),
         to_custom(signals),
-        Dict(),
-        consumers,
-        sources,
+        inputs,
+        consumer_inputs,
+        source_inputs,
     )
 end
 
