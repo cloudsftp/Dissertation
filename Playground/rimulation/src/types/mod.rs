@@ -55,8 +55,8 @@ struct Network {
 }
 
 fn find_spanning_tree(
-    nodes: Vec<Node>,
-    edges: Vec<Edge>,
+    nodes: &[Node],
+    edges: &[Edge],
 ) -> Result<(HashSet<usize>, HashSet<usize>), Error> {
     let pipes_by_node: HashMap<usize, Vec<usize>> = nodes
         .iter()
@@ -128,23 +128,37 @@ mod tests {
 
     fn assert_find_spanning_tree(
         name: &str,
-        nodes: Vec<Node>,
-        edges: Vec<Edge>,
+        num_nodes: usize,
+        edges: &[(usize, usize)],
         expected_spanning_tree: &[usize],
-        expected_cycle_edges: &[usize],
     ) {
-        let (spanning_tree, cycle_edges) =
-            find_spanning_tree(nodes, edges).expect("could not compute spanning tree");
+        let nodes = (0..num_nodes)
+            .map(|i| Node::Node {
+                name: format!("N{}", i),
+            })
+            .collect::<Vec<_>>();
+        let edges = edges
+            .iter()
+            .cloned()
+            .map(|(src, tgt)| Edge { src, tgt })
+            .collect::<Vec<_>>();
 
+        let (spanning_tree, cycle_edges) =
+            find_spanning_tree(&nodes, &edges).expect("could not compute spanning tree");
+
+        let expected_spanning_tree = HashSet::from_iter(expected_spanning_tree.iter().cloned());
+        let expected_cycle_edges = HashSet::from_iter(0..edges.len())
+            .difference(&expected_spanning_tree)
+            .cloned()
+            .collect::<HashSet<_>>();
         assert_eq!(
-            spanning_tree,
-            HashSet::from_iter(expected_spanning_tree.iter().cloned()),
+            spanning_tree, expected_spanning_tree,
             "spanning tree unexpected for the test case '{}'",
             name,
         );
+
         assert_eq!(
-            cycle_edges,
-            HashSet::from_iter(expected_cycle_edges.iter().cloned()),
+            cycle_edges, expected_cycle_edges,
             "cycle edges unexpected for the test case '{}'",
             name,
         )
@@ -152,57 +166,30 @@ mod tests {
 
     #[test]
     fn test_find_spanning_tree() {
+        assert_find_spanning_tree("single edge", 2, &[(0, 1)], &[0]);
+        assert_find_spanning_tree("two edges", 3, &[(0, 1), (0, 2)], &[0, 1]);
+        assert_find_spanning_tree("small cycle", 3, &[(0, 1), (0, 2), (1, 2)], &[0, 1]);
         assert_find_spanning_tree(
-            "single edge",
-            vec![
-                Node::Node {
-                    name: String::from("N1"),
-                },
-                Node::Node {
-                    name: String::from("N2"),
-                },
+            "two cycles",
+            8,
+            &[
+                (0, 1),
+                (1, 2),
+                (2, 3),
+                (2, 4),
+                (3, 5),
+                (4, 5),
+                (5, 6),
+                (6, 7),
+                (7, 1),
             ],
-            vec![Edge { src: 0, tgt: 1 }],
-            &[0],
-            &[],
+            &[0, 1, 2, 3, 4, 7, 8],
         );
         assert_find_spanning_tree(
-            "two edges",
-            vec![
-                Node::Node {
-                    name: String::from("N1"),
-                },
-                Node::Node {
-                    name: String::from("N2"),
-                },
-                Node::Node {
-                    name: String::from("N3"),
-                },
-            ],
-            vec![Edge { src: 0, tgt: 1 }, Edge { src: 0, tgt: 2 }],
-            &[0, 1],
-            &[],
-        );
-        assert_find_spanning_tree(
-            "small cycle",
-            vec![
-                Node::Node {
-                    name: String::from("N1"),
-                },
-                Node::Node {
-                    name: String::from("N2"),
-                },
-                Node::Node {
-                    name: String::from("N3"),
-                },
-            ],
-            vec![
-                Edge { src: 0, tgt: 1 },
-                Edge { src: 0, tgt: 2 },
-                Edge { src: 1, tgt: 2 },
-            ],
-            &[0, 1],
-            &[2],
+            "two cycles",
+            8,
+            &[(0, 2), (0, 1), (1, 2), (1, 3), (2, 3), (2, 4)],
+            &[0, 1, 4, 5],
         );
     }
 }
