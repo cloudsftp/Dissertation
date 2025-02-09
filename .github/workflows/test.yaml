@@ -7,19 +7,42 @@ permissions:
   contents: read
 
 jobs:
-  test-simulation:
+  test-simulation-rust:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v2
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --workspace
+
+      - name: Test
+        run: cargo test --workspace
+
+      - name: Lint
+        run: cargo clippy -- -D warnings
+
+  test-simulation-julia:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
         with:
           version: 1.11
           arch: x64
-      - uses: julia-actions/cache@v1
-      - uses: julia-actions/julia-buildpkg@v1
+      - name: Julia Cache
+        uses: julia-actions/cache@v1
+      - name: Build Julia Package 'Simulation'
+        uses: julia-actions/julia-buildpkg@v1
         with:
           project: Playground/Simulation
-      - uses: julia-actions/julia-runtest@v1
+      - name: Run Julia Tests for 'Simulation'
+        uses: julia-actions/julia-runtest@v1
         with:
           project: Playground/Simulation
