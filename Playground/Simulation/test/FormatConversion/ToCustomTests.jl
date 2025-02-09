@@ -224,13 +224,52 @@ const zero_settings = PF.Settings(0, 0, 0, 0, 0, 0, 0, 0, 0)
     )
 end
 
-#@testset "convert producer signals to custom format"  begin
-#    test_to_custom(
-#        Dict(
-#            "S1" => PF.SourceSignal("Source2", "input1"),
-#        ),
-#        [
-#            CF.SourceSignals("S1", "S1_base_pressure", "S1_pressure_lift", "S1_temperature"),
-#        ],
-#    )
-#end
+@testset "convert source signals and inputs to custom format"  begin
+    proprietary_scenario = PF.Scenario(
+        zero_settings,
+        Dict(
+            "base_pressure" => PF.Signal(
+                "CONSTANT",
+                [["t", "min"], ["p", "Pa"]],
+                1e5, 5.,
+            ),
+            "pressure_lift" => PF.Signal(
+                "CONSTANT",
+                [["t", "min"], ["p", "Pa"]],
+                1e5, 4.5,
+            ),
+            "temperature" => PF.Signal(
+                "PIECEWISE_CUBIC",
+                [["t", "min"], ["T", "C"]],
+                1,
+                [[0., 120.], [5., 115.0], [10., 105.]],
+            ),
+        ),
+        Dict(
+            "SRC" => PF.Input(["base_pressure", "pressure_lift", "temperature"]),
+        ),
+        Dict(),
+        Dict(
+            "S1" => PF.SourceSignal("Source2", "SRC"),
+        ),
+        Dict(),
+    )
+
+    custom_scenario = to_custom(proprietary_scenario)
+
+    @test custom_scenario.signals == Dict(
+        "base_pressure" => CF.SignalConst("base_pressure", 1e5, 5),
+        "pressure_lift" => CF.SignalConst("pressure_lift", 1e5, 4.5),
+        "temperature" => CF.SignalPoly("temperature", 3, 1, [
+            CF.DataPoint(0, 120),
+            CF.DataPoint(5, 115),
+            CF.DataPoint(10, 105),
+        ]),
+    )
+    @test custom_scenario.inputs == Dict(
+        "SRC" => CF.SourceSignals("SRC", "base_pressure", "pressure_lift", "temperature"),
+    )
+    @test custom_scenario.source_inputs == Dict(
+        "S1" => "SRC",
+    )
+end

@@ -12,16 +12,15 @@ end
 
 @testset verbose = true begin
 
-    @testset verbose = true "converting" begin
-        include("FormatConversion/ConversionTests.jl")
-    end
-
-    @testset verbose = true "parsing" begin
-        include("Parsing/ParsingTests.jl")
-    end
-
     if run_all_tests
 
+        @testset verbose = true "converting" begin
+            include("FormatConversion/ConversionTests.jl")
+        end
+
+        @testset verbose = true "parsing" begin
+            include("Parsing/ParsingTests.jl")
+        end
 
         @testset "computing spanning tree" begin
             include("SpanningTreeTests.jl")
