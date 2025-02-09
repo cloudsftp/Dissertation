@@ -54,11 +54,8 @@ struct Network {
     edges: Vec<Edge>,
 }
 
-fn find_spanning_tree(
-    nodes: &[Node],
-    edges: &[Edge],
-) -> Result<(HashSet<usize>, HashSet<usize>), Error> {
-    let pipes_by_node: HashMap<usize, Vec<usize>> = nodes
+fn get_adjacent_edges(nodes: &[Node], edges: &[Edge]) -> HashMap<usize, Vec<usize>> {
+    nodes
         .iter()
         .enumerate()
         .map(|(node_idx, _)| {
@@ -72,7 +69,64 @@ fn find_spanning_tree(
                     .collect(),
             )
         })
-        .collect();
+        .collect()
+}
+
+fn collect_feed(
+    feed_nodes: &mut HashSet<usize>,
+    feed_edges: &mut HashSet<usize>,
+    current_node: usize,
+    adjacent_edges: &HashMap<usize, Vec<usize>>,
+    edges: &[Edge],
+) -> Result<(), Error> {
+    if feed_nodes.contains(&current_node) {
+        return Ok(());
+    }
+    feed_nodes.insert(current_node);
+
+    let walkable_edges = adjacent_edges.get(&current_node).ok_or(anyhow!(
+        "node '{}' does not have any adjacent edges",
+        current_node
+    ))?;
+    for edge_idx in walkable_edges {
+        let edge = &edges
+            .get(*edge_idx)
+            .ok_or(anyhow!("edge '{}' does not exist", edge_idx))?;
+        let next_node = edge.get_other_node(current_node)?;
+
+        feed_edges.insert(*edge_idx);
+        collect_feed(feed_nodes, feed_edges, next_node, adjacent_edges, edges)?;
+    }
+
+    Ok(())
+}
+
+fn find_feed(
+    nodes: &[Node],
+    edges: &[Edge],
+    start_node: usize,
+) -> Result<(HashSet<usize>, HashSet<usize>), Error> {
+    let adjacent_edges = get_adjacent_edges(nodes, edges);
+
+    let mut feed_nodes = HashSet::new();
+    let mut feed_edges = HashSet::new();
+
+    collect_feed(
+        &mut feed_nodes,
+        &mut feed_edges,
+        start_node,
+        &adjacent_edges,
+        edges,
+    )?;
+
+    Ok((feed_nodes, feed_edges))
+}
+
+fn find_spanning_tree(
+    nodes: &[Node],
+    edges: &[Edge],
+) -> Result<(HashSet<usize>, HashSet<usize>), Error> {
+    let adjacent_edges = get_adjacent_edges(nodes, edges);
 
     let mut spanning_tree = HashSet::new();
     let mut cycle_edges = HashSet::new();
@@ -82,7 +136,7 @@ fn find_spanning_tree(
 
     let enqueue_work_items =
         |work: &mut VecDeque<(usize, usize)>, spanning_tree: &HashSet<usize>, node_idx| {
-            for edge_index in &pipes_by_node[&node_idx] {
+            for edge_index in &adjacent_edges[&node_idx] {
                 if spanning_tree.contains(edge_index) {
                     continue;
                 }
@@ -124,7 +178,77 @@ impl Edge {
 
 #[cfg(test)]
 mod tests {
+    use std::hash::Hash;
+
     use super::*;
+
+    fn set_of<T: Clone + Eq + Hash>(values: &[T]) -> HashSet<T> {
+        HashSet::from_iter(values.iter().cloned())
+    }
+
+    fn create_dummy_net(num_nodes: usize, edges: &[(usize, usize)]) -> (Vec<Node>, Vec<Edge>) {
+        let nodes = (0..num_nodes)
+            .map(|i| Node::Node {
+                name: format!("N{}", i),
+            })
+            .collect();
+        let edges = edges
+            .iter()
+            .cloned()
+            .map(|(src, tgt)| Edge { src, tgt })
+            .collect();
+
+        (nodes, edges)
+    }
+
+    fn assert_find_feed(
+        name: &str,
+        num_nodes: usize,
+        edges: &[(usize, usize)],
+        start_node: usize,
+        expected_nodes: &[usize],
+        expected_edges: &[usize],
+    ) {
+        let (nodes, edges) = create_dummy_net(num_nodes, edges);
+
+        let (nodes, edges) =
+            find_feed(&nodes, &edges, start_node).expect("could not find feed of network");
+
+        let expected_nodes = set_of(expected_nodes);
+        let expected_edges = set_of(expected_edges);
+
+        assert_eq!(
+            nodes, expected_nodes,
+            "feed nodes not as expected in test case '{}'",
+            name
+        );
+        assert_eq!(
+            edges, expected_edges,
+            "feed edges not as expected in test case '{}'",
+            name
+        );
+    }
+
+    #[test]
+    fn test_find_feed() {
+        assert_find_feed("one edge", 2, &[(0, 1)], 0, &[0, 1], &[0]);
+        assert_find_feed(
+            "small loop",
+            3,
+            &[(0, 1), (0, 2), (1, 2)],
+            0,
+            &[0, 1, 2],
+            &[0, 1, 2],
+        );
+        assert_find_feed(
+            "disconnected loops",
+            6,
+            &[(0, 1), (0, 2), (1, 2), (3, 4), (3, 5), (4, 5)],
+            0,
+            &[0, 1, 2],
+            &[0, 1, 2],
+        );
+    }
 
     fn assert_find_spanning_tree(
         name: &str,
@@ -132,25 +256,14 @@ mod tests {
         edges: &[(usize, usize)],
         expected_spanning_tree: &[usize],
     ) {
-        let nodes = (0..num_nodes)
-            .map(|i| Node::Node {
-                name: format!("N{}", i),
-            })
-            .collect::<Vec<_>>();
-        let edges = edges
-            .iter()
-            .cloned()
-            .map(|(src, tgt)| Edge { src, tgt })
-            .collect::<Vec<_>>();
+        let (nodes, edges) = create_dummy_net(num_nodes, edges);
 
         let (spanning_tree, cycle_edges) =
             find_spanning_tree(&nodes, &edges).expect("could not compute spanning tree");
 
-        let expected_spanning_tree = HashSet::from_iter(expected_spanning_tree.iter().cloned());
-        let expected_cycle_edges = HashSet::from_iter(0..edges.len())
-            .difference(&expected_spanning_tree)
-            .cloned()
-            .collect::<HashSet<_>>();
+        let expected_spanning_tree = set_of(expected_spanning_tree);
+        let expected_cycle_edges =
+            HashSet::from_iter((0..edges.len()).filter(|i| !expected_spanning_tree.contains(i)));
         assert_eq!(
             spanning_tree, expected_spanning_tree,
             "spanning tree unexpected for the test case '{}'",
