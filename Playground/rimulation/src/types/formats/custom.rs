@@ -1,3 +1,4 @@
+use super::super::Signal;
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
@@ -61,28 +62,6 @@ struct Settings {
     ramp_time: f64,
     num_iterations: usize,
     tolerance: f64,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct DataPoint {
-    t: f64,
-    v: f64,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(untagged)]
-enum Signal {
-    Const {
-        name: String,
-        scale: f64,
-        data: f64,
-    },
-    Poly {
-        name: String,
-        degree: usize,
-        scale: f64,
-        data: Vec<DataPoint>,
-    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
