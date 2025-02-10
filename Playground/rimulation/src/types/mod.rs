@@ -1,5 +1,7 @@
 mod formats;
 
+use formats::custom;
+
 use std::collections::{HashMap, HashSet, VecDeque};
 
 use anyhow::{anyhow, Error};
@@ -52,6 +54,54 @@ struct Edge {
 struct Network {
     nodes: Vec<Node>,
     edges: Vec<Edge>,
+}
+
+impl TryFrom<custom::Network> for Network {
+    type Error = Error;
+
+    fn try_from(value: custom::Network) -> Result<Self, Self::Error> {
+        let consumer_node_names = value
+            .topology
+            .consumers
+            .iter()
+            .map(|consumer| consumer.src.clone())
+            .collect::<HashSet<_>>();
+
+        let source_node_names = value
+            .topology
+            .sources
+            .iter()
+            .map(|source| source.tgt.clone())
+            .collect::<HashSet<_>>();
+
+        let nodes = value
+            .topology
+            .nodes
+            .into_iter()
+            .map(|node| {
+                if consumer_node_names.contains(&node.name) {
+                    Node::Demand {
+                        name: node.name,
+                        demand: todo!(),
+                    }
+                } else if source_node_names.contains(&node.name) {
+                    Node::Pressure {
+                        name: node.name,
+                        pressure: todo!(),
+                        temperature: todo!(),
+                    }
+                } else {
+                    Node::Node { name: node.name }
+                }
+            })
+            .collect::<Vec<_>>();
+
+        // prepare [node], [edge]
+
+        // only keep the ones in feed
+        // find spanning tree, (find pressure paths), reorder
+        todo!();
+    }
 }
 
 fn get_adjacent_edges(nodes: &[Node], edges: &[Edge]) -> HashMap<usize, Vec<usize>> {

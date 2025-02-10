@@ -4,69 +4,69 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Position {
-    x: f64,
-    y: f64,
-    z: f64,
+pub struct Position {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Node {
-    name: String,
-    position: Position,
-    feed: bool,
+pub struct Node {
+    pub name: String,
+    pub position: Position,
+    pub feed: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Pipe {
-    name: String,
-    length: f64,
-    diameter: f64,
-    transmittance: f64,
-    roughness: f64,
-    zeta: f64,
-    src: String,
-    tgt: String,
+pub struct Pipe {
+    pub name: String,
+    pub length: f64,
+    pub diameter: f64,
+    pub transmittance: f64,
+    pub roughness: f64,
+    pub zeta: f64,
+    pub src: String,
+    pub tgt: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Consumer {
-    name: String,
-    src: String,
-    tgt: String,
+pub struct Consumer {
+    pub name: String,
+    pub src: String,
+    pub tgt: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Source {
-    name: String,
-    src: String,
-    tgt: String,
+pub struct Source {
+    pub name: String,
+    pub src: String,
+    pub tgt: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Topology {
-    nodes: Vec<Node>,
-    pipes: Vec<Pipe>,
-    consumers: Vec<Consumer>,
-    sources: Vec<Source>,
+pub struct Topology {
+    pub nodes: Vec<Node>,
+    pub pipes: Vec<Pipe>,
+    pub consumers: Vec<Consumer>,
+    pub sources: Vec<Source>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Settings {
-    feed_temperature: f64,
-    return_temperature: f64,
-    ground_temperature: f64,
-    time_start: f64,
-    time_end: f64,
-    time_step: f64,
-    ramp_time: f64,
-    num_iterations: usize,
-    tolerance: f64,
+pub struct Settings {
+    pub feed_temperature: f64,
+    pub return_temperature: f64,
+    pub ground_temperature: f64,
+    pub time_start: f64,
+    pub time_end: f64,
+    pub time_step: f64,
+    pub ramp_time: f64,
+    pub num_iterations: usize,
+    pub tolerance: f64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
-enum Input {
+pub enum Input {
     Consumer {
         name: String,
         demand: String,
@@ -81,24 +81,30 @@ enum Input {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct ConsumerSignalFactors {
-    yearly_demand: f64,
-    normal_return_temperature: f64,
+pub struct ConsumerSignalFactors {
+    pub yearly_demand: f64,
+    pub normal_return_temperature: f64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct ConsumerInput {
-    input: String,
-    factors: ConsumerSignalFactors,
+pub struct ConsumerInput {
+    pub input: String,
+    pub factors: ConsumerSignalFactors,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Scenario {
-    settings: Settings,
-    signals: Vec<Signal>,
-    inputs: Vec<Input>,
-    consumer_inputs: HashMap<String, ConsumerInput>,
-    source_inputs: HashMap<String, String>,
+pub struct Scenario {
+    pub settings: Settings,
+    pub signals: Vec<Signal>,
+    pub inputs: Vec<Input>,
+    pub consumer_inputs: HashMap<String, ConsumerInput>,
+    pub source_inputs: HashMap<String, String>,
+}
+
+#[derive(Debug)]
+pub struct Network {
+    pub topology: Topology,
+    pub scenario: Scenario,
 }
 
 #[cfg(test)]
