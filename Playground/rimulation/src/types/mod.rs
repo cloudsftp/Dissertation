@@ -1,32 +1,57 @@
 mod formats;
 
-use formats::custom;
-
-use std::collections::{HashMap, HashSet, VecDeque};
+use formats::{
+    custom::{self, Input},
+    NamedComponent,
+};
 
 use anyhow::{anyhow, Error};
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet, VecDeque};
 
-#[derive(Debug, Serialize, Deserialize)]
+const HOURS_PER_YEAR: f64 = 8760.;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct DataPoint {
     t: f64,
     v: f64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 enum Signal {
     Const {
-        name: String,
         scale: f64,
         data: f64,
     },
     Poly {
-        name: String,
         degree: usize,
         scale: f64,
         data: Vec<DataPoint>,
     },
+}
+
+impl Signal {
+    fn scale_data(self, factor: f64) -> Self {
+        match self {
+            Signal::Const { scale, data } => Signal::Const {
+                scale,
+                data: data * factor,
+            },
+            Signal::Poly {
+                degree,
+                scale,
+                data,
+            } => Signal::Poly {
+                degree,
+                scale,
+                data: data
+                    .into_iter()
+                    .map(|DataPoint { t, v }| DataPoint { t, v: v * factor })
+                    .collect(),
+            },
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -56,45 +81,77 @@ struct Network {
     edges: Vec<Edge>,
 }
 
+fn set_of_names<T: NamedComponent>(
+    elements: &[T],
+    extract_node_name: fn(&T) -> String,
+) -> HashMap<String, String> {
+    elements
+        .iter()
+        .map(|element| (element.get_name(), extract_node_name(element)))
+        .collect()
+}
+
 impl TryFrom<custom::Network> for Network {
     type Error = Error;
 
     fn try_from(value: custom::Network) -> Result<Self, Self::Error> {
-        let consumer_node_names = value
-            .topology
-            .consumers
-            .iter()
-            .map(|consumer| consumer.src.clone())
-            .collect::<HashSet<_>>();
+        let consumers_by_node =
+            set_of_names(&value.topology.consumers, |consumer| consumer.src.clone());
+        let sources_by_node = set_of_names(&value.topology.sources, |source| source.tgt.clone());
 
-        let source_node_names = value
-            .topology
-            .sources
-            .iter()
-            .map(|source| source.tgt.clone())
-            .collect::<HashSet<_>>();
+        let nodes =
+            value
+                .topology
+                .nodes
+                .into_iter()
+                .map(|node| {
+                    Ok(
+                        if let Some(consumer_name) = consumers_by_node.get(&node.name) {
+                            let consumer_input = &value
+                                .scenario
+                                .consumer_inputs
+                                .get(&node.name)
+                                .ok_or(anyhow!("no inputs defined for consumer '{}'", node.name))?;
 
-        let nodes = value
-            .topology
-            .nodes
-            .into_iter()
-            .map(|node| {
-                if consumer_node_names.contains(&node.name) {
-                    Node::Demand {
-                        name: node.name,
-                        demand: todo!(),
-                    }
-                } else if source_node_names.contains(&node.name) {
-                    Node::Pressure {
-                        name: node.name,
-                        pressure: todo!(),
-                        temperature: todo!(),
-                    }
-                } else {
-                    Node::Node { name: node.name }
-                }
-            })
-            .collect::<Vec<_>>();
+                            let input = value.scenario.inputs.get(&consumer_input.input).ok_or(
+                                anyhow!("input with name '{}' does not exist", consumer_input.input),
+                            )?;
+
+                            let demand_signal_name = if let Input::Consumer{demand, return_temperature: _} = input {
+                                Ok(demand)
+                            } else {
+                                Err(anyhow!("input with name '{}' has the wrong type, expected to be Input::Consumer", consumer_input.input))
+                            }?;
+
+                            let demand =
+                                value
+                                    .scenario
+                                    .signals
+                                    .get(demand_signal_name)
+                                    .ok_or(anyhow!(
+                                        "signal with name '{}' does not exist",
+                                        demand_signal_name
+                                    ))?
+                                    .clone()
+                                    .scale_data(consumer_input.factors.yearly_demand / HOURS_PER_YEAR);
+                             // TODO: why scaled by hours per year, not seconds?
+
+                            Node::Demand {
+                                name: node.name,
+                                demand,
+                            }
+                        } else if let Some(source_name) = sources_by_node.get(&node.name) {
+                            Node::Pressure {
+                                name: node.name,
+                                pressure: todo!(),
+                                temperature: todo!(),
+                            }
+                        } else {
+                            Node::Node { name: node.name }
+                        },
+                    )
+                })
+                .collect::<Result<Vec<_>, Error>>()?;
 
         // prepare [node], [edge]
 

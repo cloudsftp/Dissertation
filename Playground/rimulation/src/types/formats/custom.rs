@@ -1,7 +1,8 @@
 use super::super::Signal;
-use std::collections::HashMap;
+use super::NamedComponent;
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Position {
@@ -15,6 +16,12 @@ pub struct Node {
     pub name: String,
     pub position: Position,
     pub feed: bool,
+}
+
+impl NamedComponent for Node {
+    fn get_name(&self) -> String {
+        self.name.clone()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -36,11 +43,23 @@ pub struct Consumer {
     pub tgt: String,
 }
 
+impl NamedComponent for Consumer {
+    fn get_name(&self) -> String {
+        self.name.clone()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Source {
     pub name: String,
     pub src: String,
     pub tgt: String,
+}
+
+impl NamedComponent for Source {
+    fn get_name(&self) -> String {
+        self.name.clone()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -68,12 +87,10 @@ pub struct Settings {
 #[serde(untagged)]
 pub enum Input {
     Consumer {
-        name: String,
         demand: String,
         return_temperature: String,
     },
     Source {
-        name: String,
         base_pressure: String,
         pressure_lift: String,
         temperature: String,
@@ -95,8 +112,8 @@ pub struct ConsumerInput {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Scenario {
     pub settings: Settings,
-    pub signals: Vec<Signal>,
-    pub inputs: Vec<Input>,
+    pub signals: HashMap<String, Signal>,
+    pub inputs: HashMap<String, Input>,
     pub consumer_inputs: HashMap<String, ConsumerInput>,
     pub source_inputs: HashMap<String, String>,
 }

@@ -10,9 +10,8 @@
         "num_iterations": 100,
         "tolerance": 1e-6
     },
-    "signals": [
-        {
-            "name": "C1_demand",
+    "signals": {
+        "C1_demand": {
             "degree": 1,
             "scale": 1,
             "data": [
@@ -34,23 +33,19 @@
                 }
             ]
         },
-        {
-            "name": "C1_return_temperature",
+        "C1_return_temperature": {
             "scale": 1,
             "data": 1
         },
-        {
-            "name": "S1_base_pressure",
+        "S1_base_pressure": {
             "scale": 100000,
             "data": 5
         },
-        {
-            "name": "S1_pressure_lift",
+        "S1_pressure_lift": {
             "scale": 100000,
             "data": 4.5
         },
-        {
-            "name": "S1_temperature",
+        "S1_temperature": {
             "degree": 3,
             "scale": 1,
             "data": [
@@ -72,20 +67,18 @@
                 }
             ]
         }
-    ],
-    "inputs": [
-        {
-            "name": "CON_IN_1",
+    },
+    "inputs": {
+        "CON_IN_1": {
             "demand": "C1_demand",
             "return_temperature": "C1_return_temperature"
         },
-        {
-            "name": "SRC_IN_1",
+        "SRC_IN_1": {
             "base_pressure": "S1_base_pressure",
             "pressure_lift": "S1_pressure_lift",
             "temperature": "S1_temperature"
         }
-    ],
+    },
     "consumer_inputs": {
         "C1": {
             "input": "CON_IN_1",
