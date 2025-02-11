@@ -125,7 +125,7 @@ pub struct Network {
 }
 
 #[cfg(test)]
-mod test {
+pub mod test {
     use super::*;
 
     use serde_json::from_reader;
@@ -141,5 +141,108 @@ mod test {
     fn no_error_parsing_custom_format_scenario() {
         let file = fs::File::open("data/custom_format/scenario.json").expect("could not open file");
         let _: Scenario = from_reader(file).expect("could not parse scenario json");
+    }
+}
+
+#[cfg(test)]
+pub mod test_util {
+    use super::*;
+
+    const DUMMY_CUSTOM_POSITION: Position = Position {
+        x: 1.,
+        y: 2.,
+        z: 3.,
+    };
+
+    const DUMMY_CUSTOM_SETTINGS: Settings = Settings {
+        feed_temperature: 1.,
+        return_temperature: 2.,
+        ground_temperature: 3.,
+        time_start: 4.,
+        time_end: 5.,
+        time_step: 6.,
+        ramp_time: 7.,
+        num_iterations: 8,
+        tolerance: 9.,
+    };
+
+    fn create_test_custom_topology(
+        num_nodes: usize,
+        num_feed_nodes: usize,
+        edges: &[(usize, usize)],
+        consumers: &[usize],
+        sources: &[usize],
+    ) -> Topology {
+        let nodes = (0..num_nodes)
+            .map(|i| Node {
+                name: format!("N{}", i),
+                position: DUMMY_CUSTOM_POSITION,
+                feed: i < num_feed_nodes,
+            })
+            .collect();
+
+        let pipes = edges
+            .iter()
+            .enumerate()
+            .map(|(i, (src, tgt))| Pipe {
+                name: format!("P{}", i),
+                length: 1.,
+                diameter: 2.,
+                transmittance: 3.,
+                roughness: 4.,
+                zeta: 5.,
+                src: format!("N{}", src),
+                tgt: format!("N{}", tgt),
+            })
+            .collect();
+
+        let consumers = consumers
+            .iter()
+            .enumerate()
+            .map(|(i, j)| Consumer {
+                name: format!("C{}", i),
+                src: format!("N{}", j),
+                tgt: format!("N{}", j + num_feed_nodes),
+            })
+            .collect();
+
+        let sources = sources
+            .iter()
+            .enumerate()
+            .map(|(i, j)| Source {
+                name: format!("S{}", i),
+                src: format!("N{}", j),
+                tgt: format!("N{}", j + num_feed_nodes),
+            })
+            .collect();
+
+        Topology {
+            nodes,
+            pipes,
+            consumers,
+            sources,
+        }
+    }
+
+    pub fn create_test_custom_net(
+        num_nodes: usize,
+        num_feed_nodes: usize,
+        edges: &[(usize, usize)],
+        consumers: &[usize],
+        sources: &[usize],
+    ) -> Network {
+        let topology =
+            create_test_custom_topology(num_nodes, num_feed_nodes, edges, consumers, sources);
+
+        Network {
+            topology,
+            scenario: Scenario {
+                settings: DUMMY_CUSTOM_SETTINGS,
+                signals: HashMap::new(),
+                inputs: HashMap::new(),
+                consumer_inputs: HashMap::new(),
+                source_inputs: HashMap::new(),
+            },
+        }
     }
 }

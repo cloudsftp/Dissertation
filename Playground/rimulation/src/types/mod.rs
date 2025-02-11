@@ -297,105 +297,8 @@ impl Edge {
 mod tests {
     use std::hash::Hash;
 
+    use super::formats::custom;
     use super::*;
-
-    const DUMMY_CUSTOM_POSITION: custom::Position = custom::Position {
-        x: 1.,
-        y: 2.,
-        z: 3.,
-    };
-
-    const DUMMY_CUSTOM_SETTINGS: custom::Settings = custom::Settings {
-        feed_temperature: 1.,
-        return_temperature: 2.,
-        ground_temperature: 3.,
-        time_start: 4.,
-        time_end: 5.,
-        time_step: 6.,
-        ramp_time: 7.,
-        num_iterations: 8,
-        tolerance: 9.,
-    };
-
-    fn create_test_custom_topology(
-        num_nodes: usize,
-        num_feed_nodes: usize,
-        edges: &[(usize, usize)],
-        consumers: &[usize],
-        sources: &[usize],
-    ) -> custom::Topology {
-        let nodes = (0..num_nodes)
-            .map(|i| custom::Node {
-                name: format!("N{}", i),
-                position: DUMMY_CUSTOM_POSITION,
-                feed: i < num_feed_nodes,
-            })
-            .collect();
-
-        let pipes = edges
-            .iter()
-            .enumerate()
-            .map(|(i, (src, tgt))| custom::Pipe {
-                name: format!("P{}", i),
-                length: 1.,
-                diameter: 2.,
-                transmittance: 3.,
-                roughness: 4.,
-                zeta: 5.,
-                src: format!("N{}", src),
-                tgt: format!("N{}", tgt),
-            })
-            .collect();
-
-        let consumers = consumers
-            .iter()
-            .enumerate()
-            .map(|(i, j)| custom::Consumer {
-                name: format!("C{}", i),
-                src: format!("N{}", j),
-                tgt: format!("N{}", j + num_feed_nodes),
-            })
-            .collect();
-
-        let sources = sources
-            .iter()
-            .enumerate()
-            .map(|(i, j)| custom::Source {
-                name: format!("S{}", i),
-                src: format!("N{}", j),
-                tgt: format!("N{}", j + num_feed_nodes),
-            })
-            .collect();
-
-        custom::Topology {
-            nodes,
-            pipes,
-            consumers,
-            sources,
-        }
-    }
-
-    fn create_test_custom_net(
-        num_nodes: usize,
-        num_feed_nodes: usize,
-        edges: &[(usize, usize)],
-        consumers: &[usize],
-        sources: &[usize],
-    ) -> custom::Network {
-        let topology =
-            create_test_custom_topology(num_nodes, num_feed_nodes, edges, consumers, sources);
-
-        custom::Network {
-            topology,
-            scenario: custom::Scenario {
-                settings: DUMMY_CUSTOM_SETTINGS,
-                signals: HashMap::new(),
-                inputs: HashMap::new(),
-                consumer_inputs: HashMap::new(),
-                source_inputs: HashMap::new(),
-            },
-        }
-    }
 
     // TODO: move to some utils module
     fn set_of<T: Clone + Eq + Hash>(values: &[T]) -> HashSet<T> {
@@ -422,11 +325,13 @@ mod tests {
 
     #[test]
     fn test_extract_nodes() {
-        let custom_net = create_test_custom_net(8, 4, &[(0, 1), (1, 2)], &[3, 4], &[0]);
+        let custom_net =
+            custom::test_util::create_test_custom_net(8, 4, &[(0, 1), (1, 2)], &[3, 4], &[0]);
 
         let nodes = extract_nodes(&custom_net).expect("could not extract nodes from custom net");
 
-        // TODO: test for nodes (length, types, names, signals)
+        assert_eq!(nodes.len(), 8);
+        // TODO: test for nodes (types, names, signals)
     }
 
     fn assert_find_feed(
