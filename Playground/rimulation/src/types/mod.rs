@@ -91,67 +91,77 @@ fn set_of_names<T: NamedComponent>(
         .collect()
 }
 
+fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
+    let consumers_by_node =
+        set_of_names(&value.topology.consumers, |consumer| consumer.src.clone());
+    let sources_by_node = set_of_names(&value.topology.sources, |source| source.tgt.clone());
+
+    let get_signal = |name: &String| -> Result<Signal, Error> {
+        Ok(value
+            .scenario
+            .signals
+            .get(name)
+            .ok_or(anyhow!("signal with name '{}' does not exist", name))?
+            .clone())
+    };
+
+    value
+        .topology
+        .nodes
+        .iter()
+        .map(|node| {
+            Ok(
+                if let Some(consumer_name) = consumers_by_node.get(&node.name) {
+                    let consumer_input = &value
+                        .scenario
+                        .consumer_inputs
+                        .get(consumer_name)
+                        .ok_or(anyhow!("no inputs defined for consumer '{}'", node.name))?;
+
+                    let demand_signal_name = match value.scenario.inputs.get(&consumer_input.input).ok_or(
+                        anyhow!("input with name '{}' does not exist", consumer_input.input),
+                    )? {
+                        Input::Consumer{demand, return_temperature: _} => Ok(demand),
+                        _ => Err(anyhow!("input with name '{}' has the wrong type, expected to be Input::Consumer", consumer_input.input)),
+                    }?;
+
+                    // TODO: why scaled by hours per year, not seconds?
+                    let demand = get_signal(demand_signal_name)?.scale_data(consumer_input.factors.yearly_demand / HOURS_PER_YEAR);
+
+                    Node::Demand {
+                        name: node.name.clone(),
+                        demand,
+                    }
+                } else if let Some(source_name) = sources_by_node.get(&node.name) {
+                    let source_input_name = value.scenario.source_inputs.get(source_name).ok_or(anyhow!("no inputs defined for source '{}'", source_name))?;
+                    let (pressure_signal_name, temperature_signal_name) = match value.scenario.inputs.get(source_input_name).ok_or(
+                        anyhow!("input with name '{}' does not exist", source_input_name
+                    ))? {
+                        Input::Source{ base_pressure: _, pressure_lift, temperature } => Ok((pressure_lift, temperature)),
+                        _ => Err(anyhow!("input with name '{}' has the wrong type, expected to be Input::Source", source_input_name)),
+                    }?;
+
+                    let pressure = get_signal(pressure_signal_name)?;
+                    let temperature = get_signal(temperature_signal_name)?;
+
+                    Node::Pressure {
+                        name: node.name.clone(),
+                        pressure: pressure,
+                        temperature: temperature,
+                    }
+                } else {
+                    Node::Node { name: node.name.clone() }
+                },
+            )
+        })
+        .collect()
+}
+
 impl TryFrom<custom::Network> for Network {
     type Error = Error;
 
     fn try_from(value: custom::Network) -> Result<Self, Self::Error> {
-        let consumers_by_node =
-            set_of_names(&value.topology.consumers, |consumer| consumer.src.clone());
-        let sources_by_node = set_of_names(&value.topology.sources, |source| source.tgt.clone());
-
-        let nodes =
-            value
-                .topology
-                .nodes
-                .into_iter()
-                .map(|node| {
-                    Ok(
-                        if let Some(consumer_name) = consumers_by_node.get(&node.name) {
-                            let consumer_input = &value
-                                .scenario
-                                .consumer_inputs
-                                .get(&node.name)
-                                .ok_or(anyhow!("no inputs defined for consumer '{}'", node.name))?;
-
-                            let input = value.scenario.inputs.get(&consumer_input.input).ok_or(
-                                anyhow!("input with name '{}' does not exist", consumer_input.input),
-                            )?;
-
-                            let demand_signal_name = if let Input::Consumer{demand, return_temperature: _} = input {
-                                Ok(demand)
-                            } else {
-                                Err(anyhow!("input with name '{}' has the wrong type, expected to be Input::Consumer", consumer_input.input))
-                            }?;
-
-                            let demand =
-                                value
-                                    .scenario
-                                    .signals
-                                    .get(demand_signal_name)
-                                    .ok_or(anyhow!(
-                                        "signal with name '{}' does not exist",
-                                        demand_signal_name
-                                    ))?
-                                    .clone()
-                                    .scale_data(consumer_input.factors.yearly_demand / HOURS_PER_YEAR);
-                             // TODO: why scaled by hours per year, not seconds?
-
-                            Node::Demand {
-                                name: node.name,
-                                demand,
-                            }
-                        } else if let Some(source_name) = sources_by_node.get(&node.name) {
-                            Node::Pressure {
-                                name: node.name,
-                                pressure: todo!(),
-                                temperature: todo!(),
-                            }
-                        } else {
-                            Node::Node { name: node.name }
-                        },
-                    )
-                })
-                .collect::<Result<Vec<_>, Error>>()?;
+        let nodes = extract_nodes(&value)?;
 
         // prepare [node], [edge]
 
@@ -289,11 +299,113 @@ mod tests {
 
     use super::*;
 
+    const DUMMY_CUSTOM_POSITION: custom::Position = custom::Position {
+        x: 1.,
+        y: 2.,
+        z: 3.,
+    };
+
+    const DUMMY_CUSTOM_SETTINGS: custom::Settings = custom::Settings {
+        feed_temperature: 1.,
+        return_temperature: 2.,
+        ground_temperature: 3.,
+        time_start: 4.,
+        time_end: 5.,
+        time_step: 6.,
+        ramp_time: 7.,
+        num_iterations: 8,
+        tolerance: 9.,
+    };
+
+    fn create_test_custom_topology(
+        num_nodes: usize,
+        num_feed_nodes: usize,
+        edges: &[(usize, usize)],
+        consumers: &[usize],
+        sources: &[usize],
+    ) -> custom::Topology {
+        let nodes = (0..num_nodes)
+            .map(|i| custom::Node {
+                name: format!("N{}", i),
+                position: DUMMY_CUSTOM_POSITION,
+                feed: i < num_feed_nodes,
+            })
+            .collect();
+
+        let pipes = edges
+            .iter()
+            .enumerate()
+            .map(|(i, (src, tgt))| custom::Pipe {
+                name: format!("P{}", i),
+                length: 1.,
+                diameter: 2.,
+                transmittance: 3.,
+                roughness: 4.,
+                zeta: 5.,
+                src: format!("N{}", src),
+                tgt: format!("N{}", tgt),
+            })
+            .collect();
+
+        let consumers = consumers
+            .iter()
+            .enumerate()
+            .map(|(i, j)| custom::Consumer {
+                name: format!("C{}", i),
+                src: format!("N{}", j),
+                tgt: format!("N{}", j + num_feed_nodes),
+            })
+            .collect();
+
+        let sources = sources
+            .iter()
+            .enumerate()
+            .map(|(i, j)| custom::Source {
+                name: format!("S{}", i),
+                src: format!("N{}", j),
+                tgt: format!("N{}", j + num_feed_nodes),
+            })
+            .collect();
+
+        custom::Topology {
+            nodes,
+            pipes,
+            consumers,
+            sources,
+        }
+    }
+
+    fn create_test_custom_net(
+        num_nodes: usize,
+        num_feed_nodes: usize,
+        edges: &[(usize, usize)],
+        consumers: &[usize],
+        sources: &[usize],
+    ) -> custom::Network {
+        let topology =
+            create_test_custom_topology(num_nodes, num_feed_nodes, edges, consumers, sources);
+
+        custom::Network {
+            topology,
+            scenario: custom::Scenario {
+                settings: DUMMY_CUSTOM_SETTINGS,
+                signals: HashMap::new(),
+                inputs: HashMap::new(),
+                consumer_inputs: HashMap::new(),
+                source_inputs: HashMap::new(),
+            },
+        }
+    }
+
+    // TODO: move to some utils module
     fn set_of<T: Clone + Eq + Hash>(values: &[T]) -> HashSet<T> {
         HashSet::from_iter(values.iter().cloned())
     }
 
-    fn create_dummy_net(num_nodes: usize, edges: &[(usize, usize)]) -> (Vec<Node>, Vec<Edge>) {
+    fn create_test_nodes_and_edges(
+        num_nodes: usize,
+        edges: &[(usize, usize)],
+    ) -> (Vec<Node>, Vec<Edge>) {
         let nodes = (0..num_nodes)
             .map(|i| Node::Node {
                 name: format!("N{}", i),
@@ -308,6 +420,15 @@ mod tests {
         (nodes, edges)
     }
 
+    #[test]
+    fn test_extract_nodes() {
+        let custom_net = create_test_custom_net(8, 4, &[(0, 1), (1, 2)], &[3, 4], &[0]);
+
+        let nodes = extract_nodes(&custom_net).expect("could not extract nodes from custom net");
+
+        // TODO: test for nodes (length, types, names, signals)
+    }
+
     fn assert_find_feed(
         name: &str,
         num_nodes: usize,
@@ -316,7 +437,7 @@ mod tests {
         expected_nodes: &[usize],
         expected_edges: &[usize],
     ) {
-        let (nodes, edges) = create_dummy_net(num_nodes, edges);
+        let (nodes, edges) = create_test_nodes_and_edges(num_nodes, edges);
 
         let (nodes, edges) =
             find_feed(&nodes, &edges, start_node).expect("could not find feed of network");
@@ -363,7 +484,7 @@ mod tests {
         edges: &[(usize, usize)],
         expected_spanning_tree: &[usize],
     ) {
-        let (nodes, edges) = create_dummy_net(num_nodes, edges);
+        let (nodes, edges) = create_test_nodes_and_edges(num_nodes, edges);
 
         let (spanning_tree, cycle_edges) =
             find_spanning_tree(&nodes, &edges).expect("could not compute spanning tree");

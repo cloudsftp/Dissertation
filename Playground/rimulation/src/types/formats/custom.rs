@@ -4,7 +4,7 @@ use super::NamedComponent;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Position {
     pub x: f64,
     pub y: f64,
