@@ -81,20 +81,20 @@ struct Network {
     edges: Vec<Edge>,
 }
 
-fn set_of_names<T: NamedComponent>(
+fn node_mapping<T: NamedComponent>(
     elements: &[T],
     extract_node_name: fn(&T) -> String,
 ) -> HashMap<String, String> {
     elements
         .iter()
-        .map(|element| (element.get_name(), extract_node_name(element)))
+        .map(|element| (extract_node_name(element), element.get_name()))
         .collect()
 }
 
 fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
     let consumers_by_node =
-        set_of_names(&value.topology.consumers, |consumer| consumer.src.clone());
-    let sources_by_node = set_of_names(&value.topology.sources, |source| source.tgt.clone());
+        node_mapping(&value.topology.consumers, |consumer| consumer.src.clone());
+    let sources_by_node = node_mapping(&value.topology.sources, |source| source.tgt.clone());
 
     let get_signal = |name: &String| -> Result<Signal, Error> {
         Ok(value
@@ -110,13 +110,15 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
         .nodes
         .iter()
         .map(|node| {
+            let node_name = &node.name;
             Ok(
-                if let Some(consumer_name) = consumers_by_node.get(&node.name) {
+                if let Some(consumer_name) = consumers_by_node.get(node_name) {
+                    dbg!(&value.scenario.consumer_inputs);
                     let consumer_input = &value
                         .scenario
                         .consumer_inputs
                         .get(consumer_name)
-                        .ok_or(anyhow!("no inputs defined for consumer '{}'", node.name))?;
+                        .ok_or(anyhow!("no inputs defined for consumer '{}'", consumer_name))?;
 
                     let demand_signal_name = match value.scenario.inputs.get(&consumer_input.input).ok_or(
                         anyhow!("input with name '{}' does not exist", consumer_input.input),
@@ -129,7 +131,7 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
                     let demand = get_signal(demand_signal_name)?.scale_data(consumer_input.factors.yearly_demand / HOURS_PER_YEAR);
 
                     Node::Demand {
-                        name: node.name.clone(),
+                        name: node_name.clone(),
                         demand,
                     }
                 } else if let Some(source_name) = sources_by_node.get(&node.name) {
@@ -326,11 +328,17 @@ mod tests {
     #[test]
     fn test_extract_nodes() {
         let custom_net =
-            custom::test_util::create_test_custom_net(8, 4, &[(0, 1), (1, 2)], &[3, 4], &[0]);
+            custom::test_util::create_test_custom_net(10, 5, &[(0, 1), (1, 2)], &[3, 4], &[0]);
 
         let nodes = extract_nodes(&custom_net).expect("could not extract nodes from custom net");
 
-        assert_eq!(nodes.len(), 8);
+        assert_eq!(nodes.len(), 10);
+        dbg!(&nodes);
+        assert!(matches!(&nodes[0], Node::Pressure { .. }));
+        assert!(matches!(&nodes[1], Node::Node { .. }));
+        assert!(matches!(&nodes[2], Node::Node { .. }));
+        assert!(matches!(&nodes[3], Node::Demand { .. }));
+        assert!(matches!(&nodes[4], Node::Demand { .. }));
         // TODO: test for nodes (types, names, signals)
     }
 
