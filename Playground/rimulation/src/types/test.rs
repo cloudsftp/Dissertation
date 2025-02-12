@@ -32,10 +32,7 @@ fn create_test_nodes_and_edges(
 fn test_extract_nodes() {
     let custom_net = custom::test_util::create_test_net(10, 5, &[(0, 1), (1, 2)], &[3, 4], &[0]);
 
-    dbg!(&custom_net);
-
     let nodes = extract_nodes(&custom_net).expect("could not extract nodes from custom net");
-
     assert_eq!(nodes.len(), 10);
     assert_eq!(
         &nodes[0],
@@ -73,6 +70,21 @@ fn test_extract_nodes() {
                 .scale_data(DUMMY_CONSUMER_FACTORS.yearly_demand / HOURS_PER_YEAR)
         }
     );
+}
+
+#[test]
+fn test_extract_edges() {
+    let custom_net = custom::test_util::create_test_net(
+        10,
+        5,
+        &[(0, 1), (1, 2), (2, 3), (2, 4), (3, 4)],
+        &[3, 4],
+        &[0],
+    );
+
+    let nodes = extract_nodes(&custom_net).expect("could not extract nodes from custom net");
+    let edges =
+        extract_edges(&custom_net, &nodes).expect("could not extract edges from cutsom net");
 }
 
 fn assert_find_feed(

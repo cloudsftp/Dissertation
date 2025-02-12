@@ -73,6 +73,20 @@ enum Node {
     },
 }
 
+impl NamedComponent for Node {
+    fn get_name(&self) -> String {
+        match self {
+            Node::Pressure {
+                name,
+                pressure: _,
+                temperature: _,
+            } => name.clone(),
+            Node::Demand { name, demand: _ } => name.clone(),
+            Node::Node { name } => name.clone(),
+        }
+    }
+}
+
 #[derive(Debug)]
 struct Edge {
     src: usize,
@@ -201,7 +215,29 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
 }
 
 fn extract_edges(value: &custom::Network, nodes: &[Node]) -> Result<Vec<Edge>, Error> {
-    Ok(vec![])
+    let node_indices: HashMap<String, usize> = nodes
+        .iter()
+        .enumerate()
+        .map(|(i, node)| (node.get_name(), i))
+        .collect();
+
+    let get_node_index = |node_name| {
+        node_indices
+            .get(node_name)
+            .ok_or(anyhow!("node '{}' does not exist", node_name))
+    };
+
+    value
+        .topology
+        .pipes
+        .iter()
+        .map(|pipe| {
+            let src = *get_node_index(&pipe.src)?;
+            let tgt = *get_node_index(&pipe.tgt)?;
+
+            Ok(Edge { src, tgt })
+        })
+        .collect()
 }
 
 impl TryFrom<custom::Network> for Network {
