@@ -15,7 +15,7 @@ fn create_test_nodes_and_edges(
     edges: &[(usize, usize)],
 ) -> (Vec<Node>, Vec<Edge>) {
     let nodes = (0..num_nodes)
-        .map(|i| Node::Node {
+        .map(|i| Node::Zero {
             name: format!("N{}", i),
         })
         .collect();
@@ -45,10 +45,10 @@ fn test_extract_nodes() {
                 pressure: custom::test_util::DUMMY_CONST_SIGNAL,
                 temperature: custom::test_util::DUMMY_CONST_SIGNAL
             },
-            Node::Node {
+            Node::Zero {
                 name: String::from("N1")
             },
-            Node::Node {
+            Node::Zero {
                 name: String::from("N2")
             },
             Node::Demand {
@@ -124,6 +124,95 @@ fn test_find_feed() {
         0,
         &[0, 1, 2],
         &[0, 1, 2],
+    );
+}
+
+fn assert_filter_network(
+    name: &str,
+    num_nodes: usize,
+    edges: &[(usize, usize)],
+    nodes_to_keep: &[usize],
+    edges_to_keep: &[usize],
+    expected_nodes: &[usize],
+    expected_edges: &[(usize, usize)],
+) {
+    let (nodes, edges) = create_test_nodes_and_edges(num_nodes, edges);
+
+    let nodes_to_keep = nodes_to_keep.into_iter().cloned().collect();
+    let edges_to_keep = edges_to_keep.into_iter().cloned().collect();
+
+    let (filtered_nodes, filtered_edges) =
+        filter_network(nodes, edges, nodes_to_keep, edges_to_keep).expect("filtering did not work");
+
+    assert_eq!(
+        filtered_nodes,
+        expected_nodes
+            .iter()
+            .map(|i| Node::Zero {
+                name: format!("N{}", i)
+            })
+            .collect::<Vec<_>>(),
+        "filtered nodes not as expected in test case '{}'",
+        name
+    );
+    assert_eq!(
+        filtered_edges,
+        expected_edges
+            .iter()
+            .cloned()
+            .map(|(i, j)| Edge { src: i, tgt: j })
+            .collect::<Vec<_>>(),
+        "filtered nodes not as expected in test case '{}'",
+        name
+    );
+}
+
+#[test]
+fn test_filter_network() {
+    assert_filter_network(
+        "keep all",
+        5,
+        &[(0, 1), (1, 2), (2, 3), (3, 4)],
+        &[0, 1, 2, 3, 4],
+        &[0, 1, 2, 3],
+        &[0, 1, 2, 3, 4],
+        &[(0, 1), (1, 2), (2, 3), (3, 4)],
+    );
+    assert_filter_network(
+        "remove one node at the end",
+        5,
+        &[(0, 1), (1, 2), (2, 3), (3, 4)],
+        &[0, 1, 2, 3],
+        &[0, 1, 2],
+        &[0, 1, 2, 3],
+        &[(0, 1), (1, 2), (2, 3)],
+    );
+    assert_filter_network(
+        "remove all but one node",
+        5,
+        &[(0, 1), (1, 2), (2, 3), (3, 4)],
+        &[0],
+        &[],
+        &[0],
+        &[],
+    );
+    assert_filter_network(
+        "remove first node",
+        5,
+        &[(0, 1), (1, 2), (2, 3), (3, 4)],
+        &[1, 2, 3, 4],
+        &[1, 2, 3],
+        &[1, 2, 3, 4],
+        &[(0, 1), (1, 2), (2, 3)],
+    );
+    assert_filter_network(
+        "remove first node and middle",
+        5,
+        &[(0, 1), (1, 2), (2, 3), (3, 4)],
+        &[1, 3, 4],
+        &[3],
+        &[1, 3, 4],
+        &[(1, 2)],
     );
 }
 

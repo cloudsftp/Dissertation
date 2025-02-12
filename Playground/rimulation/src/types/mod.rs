@@ -57,7 +57,7 @@ impl Signal {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum Node {
     Pressure {
         name: String,
@@ -68,7 +68,7 @@ enum Node {
         name: String,
         demand: Signal,
     },
-    Node {
+    Zero {
         name: String,
     },
 }
@@ -82,7 +82,7 @@ impl NamedComponent for Node {
                 temperature: _,
             } => name.clone(),
             Node::Demand { name, demand: _ } => name.clone(),
-            Node::Node { name } => name.clone(),
+            Node::Zero { name } => name.clone(),
         }
     }
 }
@@ -206,7 +206,7 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
             } else if let Some(source_name) = sources_by_node.get(&node.name) {
                 create_source_node(source_name, node_name)
             } else {
-                Ok(Node::Node {
+                Ok(Node::Zero {
                     name: node.name.clone(),
                 })
             }
@@ -247,9 +247,8 @@ impl TryFrom<custom::Network> for Network {
         let nodes = extract_nodes(&value)?;
         let edges = extract_edges(&value, &nodes)?;
 
-        // prepare [node], [edge]
+        let (nodes, edges) = extract_feed(nodes, edges)?;
 
-        // only keep the ones in feed
         // find spanning tree, (find pressure paths), reorder
         todo!();
     }
@@ -321,6 +320,57 @@ fn find_feed(
     )?;
 
     Ok((feed_nodes, feed_edges))
+}
+
+fn filter_network(
+    nodes: Vec<Node>,
+    edges: Vec<Edge>,
+    nodes_to_keep: HashSet<usize>,
+    edges_to_keep: HashSet<usize>,
+) -> Result<(Vec<Node>, Vec<Edge>), Error> {
+    let (nodes, node_index_mapping): (Vec<Node>, HashMap<usize, usize>) = nodes
+        .into_iter()
+        .enumerate()
+        .filter(|(i, _)| nodes_to_keep.contains(i))
+        .enumerate()
+        .map(|(new_index, (old_index, node))| (node, (old_index, new_index)))
+        .collect();
+
+    let get_new_node_index = |old_index: usize| -> Result<usize, Error> {
+        node_index_mapping
+            .get(&old_index)
+            .ok_or(anyhow!("no index mapping exists for node {}", old_index))
+            .copied()
+    };
+
+    let edges = edges
+        .into_iter()
+        .enumerate()
+        .filter(|(i, _)| edges_to_keep.contains(i))
+        .map(|(_, Edge { src, tgt })| -> Result<Edge, Error> {
+            let src = get_new_node_index(src)?;
+            let tgt = get_new_node_index(tgt)?;
+
+            Ok(Edge { src, tgt })
+        })
+        .collect::<Result<Vec<Edge>, Error>>()?;
+
+    Ok((nodes, edges))
+}
+
+fn extract_feed(nodes: Vec<Node>, edges: Vec<Edge>) -> Result<(Vec<Node>, Vec<Edge>), Error> {
+    let start_node = nodes
+        .iter()
+        .enumerate()
+        .find_map(|(i, node)| match node {
+            Node::Pressure { .. } => Some(i),
+            _ => None,
+        })
+        .ok_or(anyhow!("no pressure (source) node in the network"))?;
+
+    let (nodes_to_keep, edges_to_keep) = find_feed(&nodes, &edges, start_node)?;
+
+    filter_network(nodes, edges, nodes_to_keep, edges_to_keep)
 }
 
 fn find_spanning_tree(
