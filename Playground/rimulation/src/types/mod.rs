@@ -140,10 +140,22 @@ impl TryFrom<custom::Network> for Network {
         let nodes = extract_nodes(&value)?;
         let edges = extract_edges(&value, &nodes)?;
 
+        let num_sources = nodes
+            .iter()
+            .filter(|node| matches!(node, &Node::Pressure { .. }))
+            .count();
+        if num_sources == 0 {
+            return Err(anyhow!("network does not have any sources"));
+        } else if num_sources > 1 {
+            return Err(anyhow!(
+                "network with multiple sources not supported as of yet"
+            ));
+        }
+
         let (nodes, edges) = extract_feed(nodes, edges)?;
-        let (nodes, edges) = reorder_spanning_tree(nodes, edges)?;
-        // find spanning tree, (find pressure paths), reorder
-        todo!();
+        let edges = reorder_spanning_tree(&nodes, edges)?;
+
+        Ok(Network { nodes, edges })
     }
 }
 
@@ -470,9 +482,22 @@ fn find_spanning_tree(
     Ok((spanning_tree, cycle_edges))
 }
 
-fn reorder_spanning_tree(
-    nodes: Vec<Node>,
-    edges: Vec<Edge>,
-) -> Result<(Vec<Node>, Vec<Edge>), Error> {
-    todo!()
+fn reorder_spanning_tree(nodes: &[Node], edges: Vec<Edge>) -> Result<Vec<Edge>, Error> {
+    let (spanning_tree_edges, cycle_edges) = find_spanning_tree(nodes, &edges)?;
+
+    let spanning_tree_edges = edges
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| spanning_tree_edges.contains(i));
+
+    let cycle_edges = edges
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| cycle_edges.contains(i));
+
+    Ok(spanning_tree_edges
+        .chain(cycle_edges)
+        .map(|(_, edge)| edge)
+        .cloned()
+        .collect())
 }

@@ -1,9 +1,8 @@
 use std::hash::Hash;
 
-use formats::custom::test_util::DUMMY_CONSUMER_FACTORS;
-
-use super::formats::custom;
 use super::*;
+
+use formats::custom::test_util::{DUMMY_CONST_SIGNAL, DUMMY_CONSUMER_FACTORS};
 
 const DUMMY_PIPE_PARAMETERS: PipeParameters = PipeParameters {
     length: 1.,
@@ -38,6 +37,91 @@ fn create_test_nodes_and_edges(
         .collect();
 
     (nodes, edges)
+}
+
+#[test]
+fn test_from_custom_network() {
+    let feed_edges = [
+        (0, 1),
+        (1, 2),
+        (1, 4),
+        (2, 5),
+        (3, 4),
+        (3, 6),
+        (4, 5),
+        (5, 6),
+        (7, 8),
+    ];
+
+    let num_feed_nodes = 10;
+    let mut edges = Vec::with_capacity(20);
+
+    for (i, j) in feed_edges {
+        edges.push((i, j));
+        edges.push((i + num_feed_nodes, j + num_feed_nodes));
+    }
+
+    let custom_network =
+        custom::test_util::create_test_net(20, num_feed_nodes, &edges, &[5, 6], &[0]);
+
+    let network: Network = custom_network
+        .try_into()
+        .expect("could not convert custom network into internal network type");
+
+    let scaled_dummy_const_signal = custom::test_util::DUMMY_CONST_SIGNAL
+        .scale_data(DUMMY_CONSUMER_FACTORS.yearly_demand / HOURS_PER_YEAR);
+    assert_eq!(
+        network.nodes,
+        [
+            Node::Pressure {
+                name: String::from("N0"),
+                pressure: DUMMY_CONST_SIGNAL,
+                temperature: DUMMY_CONST_SIGNAL
+            },
+            Node::Zero {
+                name: String::from("N1")
+            },
+            Node::Zero {
+                name: String::from("N2")
+            },
+            Node::Zero {
+                name: String::from("N3")
+            },
+            Node::Zero {
+                name: String::from("N4")
+            },
+            Node::Demand {
+                name: String::from("N5"),
+                demand: scaled_dummy_const_signal.clone(),
+            },
+            Node::Demand {
+                name: String::from("N6"),
+                demand: scaled_dummy_const_signal.clone(),
+            },
+        ]
+        .to_vec()
+    );
+
+    assert_eq!(
+        network.edges,
+        [
+            (0, 1), // spanning tree edges
+            (1, 2),
+            (1, 4),
+            (2, 5),
+            (3, 4),
+            (5, 6),
+            (3, 6), // cycle edges
+            (4, 5),
+        ]
+        .map(|(i, j)| Edge {
+            src: i,
+            tgt: j,
+            parameters: DUMMY_PIPE_PARAMETERS
+        })
+        .into_iter()
+        .collect::<Vec<_>>()
+    );
 }
 
 #[test]
