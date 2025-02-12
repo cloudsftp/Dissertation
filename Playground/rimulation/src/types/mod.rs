@@ -4,7 +4,7 @@ mod formats;
 mod test;
 
 use formats::{
-    custom::{self, Input},
+    custom::{self, Input, Pipe},
     NamedComponent,
 };
 
@@ -15,14 +15,14 @@ use std::collections::{HashMap, HashSet, VecDeque};
 const HOURS_PER_YEAR: f64 = 8760.;
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-struct DataPoint {
-    t: f64,
-    v: f64,
+pub struct DataPoint {
+    pub t: f64,
+    pub v: f64,
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-enum Signal {
+pub enum Signal {
     Const {
         scale: f64,
         data: f64,
@@ -58,7 +58,7 @@ impl Signal {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-enum Node {
+pub enum Node {
     Pressure {
         name: String,
         pressure: Signal,
@@ -88,14 +88,63 @@ impl NamedComponent for Node {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-struct Edge {
-    src: usize,
-    tgt: usize,
+pub struct PipeParameters {
+    pub length: f64,
+    pub diameter: f64,
+    pub transmittance: f64,
+    pub roughness: f64,
+    pub zeta: f64,
 }
 
-struct Network {
-    nodes: Vec<Node>,
-    edges: Vec<Edge>,
+impl From<&Pipe> for PipeParameters {
+    fn from(value: &Pipe) -> Self {
+        Self {
+            length: value.length,
+            diameter: value.diameter,
+            transmittance: value.transmittance,
+            roughness: value.roughness,
+            zeta: value.zeta,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Edge {
+    pub src: usize,
+    pub tgt: usize,
+    pub parameters: PipeParameters,
+}
+
+impl Edge {
+    fn get_other_node(&self, some_node: usize) -> Result<usize, Error> {
+        if self.src == some_node {
+            Ok(self.tgt)
+        } else if self.tgt == some_node {
+            Ok(self.src)
+        } else {
+            Err(anyhow!("edge does not connect to node"))
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Network {
+    pub nodes: Vec<Node>,
+    pub edges: Vec<Edge>,
+}
+
+impl TryFrom<custom::Network> for Network {
+    type Error = Error;
+
+    fn try_from(value: custom::Network) -> Result<Self, Self::Error> {
+        let nodes = extract_nodes(&value)?;
+        let edges = extract_edges(&value, &nodes)?;
+
+        let (nodes, edges) = extract_feed(nodes, edges)?;
+        let (nodes, edges) = reorder_spanning_tree(nodes, edges)?;
+        // find spanning tree, (find pressure paths), reorder
+        todo!();
+    }
 }
 
 fn node_mapping<T: NamedComponent>(
@@ -235,23 +284,15 @@ fn extract_edges(value: &custom::Network, nodes: &[Node]) -> Result<Vec<Edge>, E
             let src = *get_node_index(&pipe.src)?;
             let tgt = *get_node_index(&pipe.tgt)?;
 
-            Ok(Edge { src, tgt })
+            let parameters = PipeParameters::from(pipe);
+
+            Ok(Edge {
+                src,
+                tgt,
+                parameters,
+            })
         })
         .collect()
-}
-
-impl TryFrom<custom::Network> for Network {
-    type Error = Error;
-
-    fn try_from(value: custom::Network) -> Result<Self, Self::Error> {
-        let nodes = extract_nodes(&value)?;
-        let edges = extract_edges(&value, &nodes)?;
-
-        let (nodes, edges) = extract_feed(nodes, edges)?;
-
-        // find spanning tree, (find pressure paths), reorder
-        todo!();
-    }
 }
 
 fn get_adjacent_edges(nodes: &[Node], edges: &[Edge]) -> HashMap<usize, Vec<usize>> {
@@ -347,12 +388,26 @@ fn filter_network(
         .into_iter()
         .enumerate()
         .filter(|(i, _)| edges_to_keep.contains(i))
-        .map(|(_, Edge { src, tgt })| -> Result<Edge, Error> {
-            let src = get_new_node_index(src)?;
-            let tgt = get_new_node_index(tgt)?;
+        .map(
+            |(
+                _,
+                Edge {
+                    src,
+                    tgt,
+                    parameters,
+                },
+            )|
+             -> Result<Edge, Error> {
+                let src = get_new_node_index(src)?;
+                let tgt = get_new_node_index(tgt)?;
 
-            Ok(Edge { src, tgt })
-        })
+                Ok(Edge {
+                    src,
+                    tgt,
+                    parameters,
+                })
+            },
+        )
         .collect::<Result<Vec<Edge>, Error>>()?;
 
     Ok((nodes, edges))
@@ -415,14 +470,9 @@ fn find_spanning_tree(
     Ok((spanning_tree, cycle_edges))
 }
 
-impl Edge {
-    fn get_other_node(&self, some_node: usize) -> Result<usize, Error> {
-        if self.src == some_node {
-            Ok(self.tgt)
-        } else if self.tgt == some_node {
-            Ok(self.src)
-        } else {
-            Err(anyhow!("edge does not connect to node"))
-        }
-    }
+fn reorder_spanning_tree(
+    nodes: Vec<Node>,
+    edges: Vec<Edge>,
+) -> Result<(Vec<Node>, Vec<Edge>), Error> {
+    todo!()
 }

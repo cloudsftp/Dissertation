@@ -5,6 +5,14 @@ use formats::custom::test_util::DUMMY_CONSUMER_FACTORS;
 use super::formats::custom;
 use super::*;
 
+const DUMMY_PIPE_PARAMETERS: PipeParameters = PipeParameters {
+    length: 1.,
+    diameter: 2.,
+    transmittance: 3.,
+    roughness: 4.,
+    zeta: 5.,
+};
+
 // TODO: move to some utils module
 fn set_of<T: Clone + Eq + Hash>(values: &[T]) -> HashSet<T> {
     HashSet::from_iter(values.iter().cloned())
@@ -22,7 +30,11 @@ fn create_test_nodes_and_edges(
     let edges = edges
         .iter()
         .cloned()
-        .map(|(src, tgt)| Edge { src, tgt })
+        .map(|(src, tgt)| Edge {
+            src,
+            tgt,
+            parameters: DUMMY_PIPE_PARAMETERS,
+        })
         .collect();
 
     (nodes, edges)
@@ -74,7 +86,13 @@ fn test_extract_edges() {
 
     assert_eq!(
         edges,
-        edge_tuples.map(|(i, j)| Edge { src: i, tgt: j }).to_vec()
+        edge_tuples
+            .map(|(i, j)| Edge {
+                src: i,
+                tgt: j,
+                parameters: DUMMY_PIPE_PARAMETERS
+            })
+            .to_vec()
     )
 }
 
@@ -160,7 +178,11 @@ fn assert_filter_network(
         expected_edges
             .iter()
             .cloned()
-            .map(|(i, j)| Edge { src: i, tgt: j })
+            .map(|(i, j)| Edge {
+                src: i,
+                tgt: j,
+                parameters: DUMMY_PIPE_PARAMETERS
+            })
             .collect::<Vec<_>>(),
         "filtered nodes not as expected in test case '{}'",
         name
