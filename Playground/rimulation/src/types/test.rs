@@ -34,57 +34,48 @@ fn test_extract_nodes() {
 
     let nodes = extract_nodes(&custom_net).expect("could not extract nodes from custom net");
     assert_eq!(nodes.len(), 10);
+
+    let scaled_dummy_const_signal = custom::test_util::DUMMY_CONST_SIGNAL
+        .scale_data(DUMMY_CONSUMER_FACTORS.yearly_demand / HOURS_PER_YEAR);
     assert_eq!(
-        &nodes[0],
-        &Node::Pressure {
-            name: String::from("N0"),
-            pressure: custom::test_util::DUMMY_CONST_SIGNAL,
-            temperature: custom::test_util::DUMMY_CONST_SIGNAL
-        }
-    );
-    assert_eq!(
-        &nodes[1],
-        &Node::Node {
-            name: String::from("N1")
-        }
-    );
-    assert_eq!(
-        &nodes[2],
-        &Node::Node {
-            name: String::from("N2")
-        }
-    );
-    assert_eq!(
-        &nodes[3],
-        &Node::Demand {
-            name: String::from("N3"),
-            demand: custom::test_util::DUMMY_CONST_SIGNAL
-                .scale_data(DUMMY_CONSUMER_FACTORS.yearly_demand / HOURS_PER_YEAR)
-        }
-    );
-    assert_eq!(
-        &nodes[4],
-        &Node::Demand {
-            name: String::from("N4"),
-            demand: custom::test_util::DUMMY_CONST_SIGNAL
-                .scale_data(DUMMY_CONSUMER_FACTORS.yearly_demand / HOURS_PER_YEAR)
-        }
+        nodes.into_iter().take(5).collect::<Vec<_>>(),
+        vec![
+            Node::Pressure {
+                name: String::from("N0"),
+                pressure: custom::test_util::DUMMY_CONST_SIGNAL,
+                temperature: custom::test_util::DUMMY_CONST_SIGNAL
+            },
+            Node::Node {
+                name: String::from("N1")
+            },
+            Node::Node {
+                name: String::from("N2")
+            },
+            Node::Demand {
+                name: String::from("N3"),
+                demand: scaled_dummy_const_signal.clone(),
+            },
+            Node::Demand {
+                name: String::from("N4"),
+                demand: scaled_dummy_const_signal.clone(),
+            },
+        ]
     );
 }
 
 #[test]
 fn test_extract_edges() {
-    let custom_net = custom::test_util::create_test_net(
-        10,
-        5,
-        &[(0, 1), (1, 2), (2, 3), (2, 4), (3, 4)],
-        &[3, 4],
-        &[0],
-    );
+    let edge_tuples = [(0, 1), (1, 2), (2, 3), (2, 4), (3, 4)];
+    let custom_net = custom::test_util::create_test_net(10, 5, &edge_tuples, &[3, 4], &[0]);
 
     let nodes = extract_nodes(&custom_net).expect("could not extract nodes from custom net");
     let edges =
         extract_edges(&custom_net, &nodes).expect("could not extract edges from cutsom net");
+
+    assert_eq!(
+        edges,
+        edge_tuples.map(|(i, j)| Edge { src: i, tgt: j }).to_vec()
+    )
 }
 
 fn assert_find_feed(

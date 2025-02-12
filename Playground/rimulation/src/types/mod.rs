@@ -87,7 +87,7 @@ impl NamedComponent for Node {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 struct Edge {
     src: usize,
     tgt: usize,
