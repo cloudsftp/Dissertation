@@ -1,5 +1,7 @@
 use std::hash::Hash;
 
+use formats::custom::test_util::DUMMY_CONSUMER_FACTORS;
+
 use super::formats::custom;
 use super::*;
 
@@ -35,13 +37,42 @@ fn test_extract_nodes() {
     let nodes = extract_nodes(&custom_net).expect("could not extract nodes from custom net");
 
     assert_eq!(nodes.len(), 10);
-    dbg!(&nodes);
-    assert!(matches!(&nodes[0], Node::Pressure { .. }));
-    assert!(matches!(&nodes[1], Node::Node { .. }));
-    assert!(matches!(&nodes[2], Node::Node { .. }));
-    assert!(matches!(&nodes[3], Node::Demand { .. }));
-    assert!(matches!(&nodes[4], Node::Demand { .. }));
-    // TODO: test for nodes (types, names, signals)
+    assert_eq!(
+        &nodes[0],
+        &Node::Pressure {
+            name: String::from("N0"),
+            pressure: custom::test_util::DUMMY_CONST_SIGNAL,
+            temperature: custom::test_util::DUMMY_CONST_SIGNAL
+        }
+    );
+    assert_eq!(
+        &nodes[1],
+        &Node::Node {
+            name: String::from("N1")
+        }
+    );
+    assert_eq!(
+        &nodes[2],
+        &Node::Node {
+            name: String::from("N2")
+        }
+    );
+    assert_eq!(
+        &nodes[3],
+        &Node::Demand {
+            name: String::from("N3"),
+            demand: custom::test_util::DUMMY_CONST_SIGNAL
+                .scale_data(DUMMY_CONSUMER_FACTORS.yearly_demand / HOURS_PER_YEAR)
+        }
+    );
+    assert_eq!(
+        &nodes[4],
+        &Node::Demand {
+            name: String::from("N4"),
+            demand: custom::test_util::DUMMY_CONST_SIGNAL
+                .scale_data(DUMMY_CONSUMER_FACTORS.yearly_demand / HOURS_PER_YEAR)
+        }
+    );
 }
 
 fn assert_find_feed(

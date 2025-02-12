@@ -14,13 +14,13 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 const HOURS_PER_YEAR: f64 = 8760.;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 struct DataPoint {
     t: f64,
     v: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 enum Signal {
     Const {
@@ -57,7 +57,7 @@ impl Signal {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum Node {
     Pressure {
         name: String,
@@ -181,8 +181,6 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
         })
     };
 
-    dbg!(&consumers_by_node);
-
     value
         .topology
         .nodes
@@ -202,11 +200,16 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
         .collect()
 }
 
+fn extract_edges(value: &custom::Network, nodes: &[Node]) -> Result<Vec<Edge>, Error> {
+    Ok(vec![])
+}
+
 impl TryFrom<custom::Network> for Network {
     type Error = Error;
 
     fn try_from(value: custom::Network) -> Result<Self, Self::Error> {
         let nodes = extract_nodes(&value)?;
+        let edges = extract_edges(&value, &nodes)?;
 
         // prepare [node], [edge]
 
