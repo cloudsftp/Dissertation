@@ -1,4 +1,4 @@
-use super::super::Signal;
+use super::super::network::Signal;
 use super::NamedComponent;
 
 use serde::{Deserialize, Serialize};

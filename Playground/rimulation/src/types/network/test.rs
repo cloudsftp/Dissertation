@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use super::*;
 
-use formats::custom::test_util::{DUMMY_CONST_SIGNAL, DUMMY_CONSUMER_FACTORS};
+use super::super::formats::custom::test_util::{DUMMY_CONST_SIGNAL, DUMMY_CONSUMER_FACTORS};
 
 const DUMMY_PIPE_PARAMETERS: PipeParameters = PipeParameters {
     length: 1.,
@@ -376,4 +376,73 @@ fn test_find_spanning_tree() {
         &[(0, 2), (0, 1), (1, 2), (1, 3), (2, 3), (2, 4)],
         &[0, 1, 4, 5],
     );
+}
+
+fn assert_signal_value_at(name: &str, signal: Signal, t: f64, expected: f64) {
+    assert_eq!(
+        signal.value_at(t).expect("could not get value at t"),
+        expected,
+        "value of signal was not as expected for test case '{}'",
+        name
+    )
+}
+
+#[test]
+fn test_const_signal_value_at() {
+    assert_signal_value_at(
+        "const 1",
+        Signal::Const {
+            scale: 1.,
+            data: 1.,
+        },
+        0.,
+        1.,
+    );
+    assert_signal_value_at(
+        "const 1 at 100",
+        Signal::Const {
+            scale: 1.,
+            data: 1.,
+        },
+        100.,
+        1.,
+    );
+    assert_signal_value_at(
+        "scaled const 1 at 100",
+        Signal::Const {
+            scale: 1_000.,
+            data: 1.,
+        },
+        100.,
+        1_000.,
+    );
+    assert_signal_value_at(
+        "scaled const 2 at 100",
+        Signal::Const {
+            scale: 1_000.,
+            data: 2.,
+        },
+        100.,
+        2_000.,
+    );
+}
+
+#[test]
+fn test_linear_signal_value_at() {
+    let signal = Signal::Poly {
+        degree: 1,
+        scale: 1.,
+        data: vec![
+            DataPoint { t: 0., v: 0. },
+            DataPoint { t: 1., v: 1. },
+            DataPoint { t: 3., v: 0. },
+        ],
+    };
+    assert_signal_value_at("linear outside of bounds: -1", signal.clone(), -1., 0.);
+    assert_signal_value_at("linear at first point", signal.clone(), 0., 0.);
+    assert_signal_value_at("linear at last point", signal.clone(), 3., 0.);
+
+    assert_signal_value_at("linear at middle point", signal.clone(), 1., 1.);
+    assert_signal_value_at("linear interpolate left middle", signal.clone(), 0.5, 0.5);
+    assert_signal_value_at("linear interpolate right skewed", signal.clone(), 1.5, 0.75);
 }
