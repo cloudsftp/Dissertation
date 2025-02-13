@@ -1,6 +1,6 @@
 use super::formats::custom;
 
-use anyhow::Error;
+use anyhow::{anyhow, Error};
 
 #[cfg(test)]
 mod test;
@@ -22,7 +22,25 @@ impl TryFrom<custom::Signal> for Signal {
                 degree,
                 scale,
                 data,
-            } => todo!(),
+            } => {
+                if degree < 1 || degree > 3 {
+                    return Err(anyhow!("polynomial of degree {} not supported", degree));
+                }
+
+                let min_points = degree + 1;
+                if data.len() < min_points {
+                    return Err(anyhow!("data needs at least {} points", min_points));
+                }
+
+                let dt = data[1].t - data[0].t;
+                for i in 1..data.len() - 1 {
+                    if data[i + 1].t - data[i].t != dt {
+                        return Err(anyhow!("data has inconsistent dt at index {}", i));
+                    }
+                }
+
+                todo!()
+            }
         }
     }
 }
