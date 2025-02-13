@@ -2,6 +2,9 @@ use super::formats::custom;
 
 use anyhow::Error;
 
+#[cfg(test)]
+mod test;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Signal {
     Const { value: f64 },
@@ -11,7 +14,16 @@ impl TryFrom<custom::Signal> for Signal {
     type Error = Error;
 
     fn try_from(value: custom::Signal) -> Result<Self, Self::Error> {
-        todo!()
+        match value {
+            custom::Signal::Const { scale, data } => Ok(Signal::Const {
+                value: scale * data,
+            }),
+            custom::Signal::Poly {
+                degree,
+                scale,
+                data,
+            } => todo!(),
+        }
     }
 }
 
