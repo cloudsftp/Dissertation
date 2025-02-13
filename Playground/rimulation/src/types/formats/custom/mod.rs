@@ -1,4 +1,3 @@
-use super::super::network::Signal;
 use super::NamedComponent;
 
 use serde::{Deserialize, Serialize};
@@ -81,6 +80,53 @@ pub struct Settings {
     pub ramp_time: f64,
     pub num_iterations: usize,
     pub tolerance: f64,
+}
+
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct DataPoint {
+    pub t: f64,
+    pub v: f64,
+}
+
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum Signal {
+    Const {
+        scale: f64,
+        data: f64,
+    },
+    Poly {
+        // TODO: make lookup cheaper (hashmap of interpolated times?)
+        degree: usize,
+        scale: f64,
+        data: Vec<DataPoint>,
+    },
+}
+
+impl Signal {
+    pub fn scale_data(&self, factor: f64) -> Self {
+        match self {
+            Signal::Const { scale, data } => Signal::Const {
+                scale: *scale,
+                data: data * factor,
+            },
+            Signal::Poly {
+                degree,
+                scale,
+                data,
+            } => Signal::Poly {
+                degree: *degree,
+                scale: *scale,
+                data: data
+                    .iter()
+                    .map(|DataPoint { t, v }| DataPoint {
+                        t: *t,
+                        v: v * factor,
+                    })
+                    .collect(),
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

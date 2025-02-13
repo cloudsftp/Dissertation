@@ -18,7 +18,7 @@ pub const DUMMY_CUSTOM_SETTINGS: Settings = Settings {
     tolerance: 9.,
 };
 
-pub const DUMMY_CONST_SIGNAL: Signal = Signal::Const {
+pub const DUMMY_CONST_CUSTOM_SIGNAL: Signal = Signal::Const {
     scale: 1.,
     data: 1.,
 };
@@ -105,7 +105,7 @@ fn create_test_scenario(num_consumers: usize, num_sources: usize) -> Scenario {
 
     Scenario {
         settings: DUMMY_CUSTOM_SETTINGS,
-        signals: [(String::from("const"), DUMMY_CONST_SIGNAL)]
+        signals: [(String::from("const"), DUMMY_CONST_CUSTOM_SIGNAL)]
             .iter()
             .cloned()
             .collect(),

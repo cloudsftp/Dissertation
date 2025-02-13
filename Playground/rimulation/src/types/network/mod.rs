@@ -5,105 +5,12 @@ use super::formats::{
     custom::{self, Input, Pipe},
     NamedComponent,
 };
+use super::signal::Signal;
 
 use anyhow::{anyhow, Error};
-use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 
 const HOURS_PER_YEAR: f64 = 8760.;
-
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct DataPoint {
-    pub t: f64,
-    pub v: f64,
-}
-
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum Signal {
-    Const {
-        scale: f64,
-        data: f64,
-    },
-    Poly {
-        // TODO: make lookup cheaper (hashmap of interpolated times?)
-        degree: usize,
-        scale: f64,
-        data: Vec<DataPoint>,
-    },
-}
-
-impl Signal {
-    fn scale_data(self, factor: f64) -> Self {
-        match self {
-            Signal::Const { scale, data } => Signal::Const {
-                scale,
-                data: data * factor,
-            },
-            Signal::Poly {
-                degree,
-                scale,
-                data,
-            } => Signal::Poly {
-                degree,
-                scale,
-                data: data
-                    .into_iter()
-                    .map(|DataPoint { t, v }| DataPoint { t, v: v * factor })
-                    .collect(),
-            },
-        }
-    }
-
-    fn value_at(&self, t: f64) -> Result<f64, Error> {
-        match self {
-            Signal::Const { scale, data } => Ok(scale * data),
-            Signal::Poly {
-                degree,
-                scale,
-                data,
-            } => {
-                let first_point = data
-                    .first()
-                    .ok_or(anyhow!("data vector should have at least one element"))?;
-                if t <= first_point.t {
-                    return Ok(scale * first_point.v);
-                }
-
-                let last_point = data
-                    .last()
-                    .ok_or(anyhow!("data vector should have at least one element"))?;
-                if t >= last_point.t {
-                    return Ok(scale * last_point.v);
-                }
-
-                let right_index = data
-                    .iter()
-                    .enumerate()
-                    .find(|(_, point)| point.t >= t)
-                    .map(|(i, _)| i)
-                    .ok_or(anyhow!(
-                        "could not find the point to the right of t = {}",
-                        t
-                    ))?;
-
-                let right = data
-                    .get(right_index)
-                    .expect("this index is taken directly from the indexes of the data array");
-                let left = data
-                    .get(right_index - 1).expect("left_index cannot be the last index of the data array. Therefore, left_index + 1 is also valid");
-
-                if right.t <= left.t {
-                    return Err(anyhow!("data points in wrong order"));
-                }
-
-                let l = right.t - left.t;
-                dbg!(left, right, l);
-                Ok(scale * (left.v * (right.t - t) + right.v * (t - left.t)) / l)
-            }
-        }
-    }
-}
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Node {
@@ -222,7 +129,7 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
         node_mapping(&value.topology.consumers, |consumer| consumer.src.clone());
     let sources_by_node = node_mapping(&value.topology.sources, |source| source.tgt.clone());
 
-    let get_signal = |name: &String| -> Result<Signal, Error> {
+    let get_signal = |name: &String| -> Result<custom::Signal, Error> {
         Ok(value
             .scenario
             .signals
@@ -265,7 +172,8 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
 
         // TODO: why scaled by hours per year, not seconds?
         let demand = get_signal(demand_signal_name)?
-            .scale_data(consumer_input.factors.yearly_demand / HOURS_PER_YEAR);
+            .scale_data(consumer_input.factors.yearly_demand / HOURS_PER_YEAR)
+            .try_into()?;
         Ok(Node::Demand {
             name: node_name.clone(),
             demand,
@@ -294,8 +202,8 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
                 )),
             }?;
 
-        let pressure = get_signal(pressure_signal_name)?;
-        let temperature = get_signal(temperature_signal_name)?;
+        let pressure = get_signal(pressure_signal_name)?.try_into()?;
+        let temperature = get_signal(temperature_signal_name)?.try_into()?;
 
         Ok(Node::Pressure {
             name: node_name.clone(),
