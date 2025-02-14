@@ -1,3 +1,5 @@
+use approx::assert_relative_eq;
+
 use super::*;
 
 use crate::types::formats::custom::{self, DataPoint};
@@ -153,17 +155,6 @@ fn cubic_interpolation() {
             .value_at(t)
             .expect(&format!("could not evaluate signal at {}", t));
 
-        assert!(
-            approx_equal(y, v),
-            "data at {} not approximately the same: {} = {}",
-            t,
-            y,
-            v,
-        )
+        assert_relative_eq!(y, v);
     }
-}
-
-const EPSILON: f64 = 1e-6;
-fn approx_equal(a: f64, b: f64) -> bool {
-    (a - b).abs() < EPSILON
 }

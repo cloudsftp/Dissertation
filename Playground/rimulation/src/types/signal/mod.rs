@@ -1,8 +1,7 @@
 use super::formats::custom::{self, DataPoint};
 
 use anyhow::{anyhow, Error};
-use ndarray::{array, Array, Array1, Array2};
-use ndarray_linalg::Solve;
+use nalgebra::{DMatrix, DVector};
 
 #[cfg(test)]
 mod test;
@@ -41,7 +40,7 @@ impl TryFrom<custom::Signal> for Signal {
                 scale,
                 data,
             } => {
-                if degree < 1 || degree > 3 {
+                if ![1, 3].contains(&degree) {
                     return Err(anyhow!("polynomial of degree {} not supported", degree));
                 }
 
@@ -64,12 +63,11 @@ impl TryFrom<custom::Signal> for Signal {
                     .map(|DataPoint { t: _, v }| scale * v)
                     .collect();
 
-                Ok(match degree {
-                    1 => interpolate_linear(h, a, b, data),
-                    2 => todo!("quadratic interpolation"),
-                    3 => interpolate_cubic(h, a, b, data)?,
+                match degree {
+                    1 => Ok(interpolate_linear(h, a, b, data)),
+                    3 => interpolate_cubic(h, a, b, data),
                     _ => unreachable!("all other degrees are not allowed"),
-                })
+                }
             }
         }
     }
@@ -101,7 +99,7 @@ fn interpolate_cubic(h: f64, a: f64, b: f64, data: Vec<f64>) -> Result<Signal, E
     for i in 1..n - 1 {
         d[i] = 6. * divided_difference(&h, &data[i - 1], &data[i], &data[i + 1]);
     }
-    let d = Array::from_vec(d);
+    let d = DVector::from_vec(d);
 
     let mat_len = (n + 1) * (n + 1);
     let mut mat = vec![0.; mat_len];
@@ -114,9 +112,15 @@ fn interpolate_cubic(h: f64, a: f64, b: f64, data: Vec<f64>) -> Result<Signal, E
     }
     mat[mat_len - 2] = 1.;
     mat[mat_len - 1] = 2.;
-    let mat = Array2::from_shape_vec((n + 1, n + 1), mat)?;
+    let mat = DMatrix::from_vec(n + 1, n + 1, mat);
 
-    let m = mat.solve(&d)?.to_vec();
+    let m = mat
+        .lu()
+        .solve(&d)
+        .ok_or(anyhow!("could not solve system of equations"))?
+        .data
+        .as_vec()
+        .to_vec();
 
     Ok(Signal::Cubic {
         h,
@@ -136,7 +140,7 @@ fn get_index(h: &f64, a: &f64, b: &f64, x: &f64) -> Result<usize, Error> {
 }
 
 impl Signal {
-    fn value_at(&self, x: f64) -> Result<f64, Error> {
+    pub fn value_at(&self, x: f64) -> Result<f64, Error> {
         Ok(match self {
             Signal::Const { value } => *value,
             Signal::Linear { h, a, b, y, dy } => {
@@ -158,51 +162,7 @@ impl Signal {
                     + (6. * y[i - 1] - m[i - 1] * h * h) * dx_r
                     + (6. * y[i] - m[i] * h * h) * dx_l)
                     / (6. * h)
-            } /*
-              Signal::Poly {
-                  degree,
-                  scale,
-                  data,
-              } => {
-                  let first_point = data
-                      .first()
-                      .ok_or(anyhow!("data vector should have at least one element"))?;
-                  if t <= first_point.t {
-                      return Ok(scale * first_point.v);
-                  }
-
-                  let last_point = data
-                      .last()
-                      .ok_or(anyhow!("data vector should have at least one element"))?;
-                  if t >= last_point.t {
-                      return Ok(scale * last_point.v);
-                  }
-
-                  let right_index = data
-                      .iter()
-                      .enumerate()
-                      .find(|(_, point)| point.t >= t)
-                      .map(|(i, _)| i)
-                      .ok_or(anyhow!(
-                          "could not find the point to the right of t = {}",
-                          t
-                      ))?;
-
-                  let right = data
-                      .get(right_index)
-                      .expect("this index is taken directly from the indexes of the data array");
-                  let left = data
-                      .get(right_index - 1).expect("left_index cannot be the last index of the data array. Therefore, left_index + 1 is also valid");
-
-                  if right.t <= left.t {
-                      return Err(anyhow!("data points in wrong order"));
-                  }
-
-                  let l = right.t - left.t;
-                  dbg!(left, right, l);
-                  Ok(scale * (left.v * (right.t - t) + right.v * (t - left.t)) / l)
-              }
-               */
+            }
         })
     }
 }
