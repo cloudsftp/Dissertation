@@ -66,12 +66,8 @@ fn convert_polynomial_validate_data() {
     assert_convert_polynomial_errors(
         "too few points, degree 3",
         3,
-        vec![
-            DataPoint { t: 0., v: 0. },
-            DataPoint { t: 0., v: 0. },
-            DataPoint { t: 0., v: 0. },
-        ],
-        "data needs at least 4 points",
+        vec![DataPoint { t: 0., v: 0. }],
+        "data needs at least 2 points",
     );
     assert_convert_polynomial_errors(
         "inconsistent dt",
@@ -82,5 +78,53 @@ fn convert_polynomial_validate_data() {
             DataPoint { t: 0., v: 0. },
         ],
         "data has inconsistent dt at index 1",
+    );
+}
+
+#[test]
+fn linear_interpolation() {
+    let custom_linear_signal = custom::Signal::Poly {
+        degree: 1,
+        scale: 1.,
+        data: vec![
+            DataPoint { t: 2., v: 0. },
+            DataPoint { t: 3., v: 1. },
+            DataPoint { t: 4., v: 0.5 },
+        ],
+    };
+
+    let linear_signal: Signal = custom_linear_signal
+        .try_into()
+        .expect("could not convert linear signal");
+
+    assert_eq!(
+        linear_signal
+            .value_at(2.)
+            .expect("could not evaluate signal at 2"),
+        0.,
+    );
+    assert_eq!(
+        linear_signal
+            .value_at(2.5)
+            .expect("could not evaluate signal at 2.5"),
+        0.5,
+    );
+    assert_eq!(
+        linear_signal
+            .value_at(2.75)
+            .expect("could not evaluate signal at 2.75"),
+        0.75,
+    );
+    assert_eq!(
+        linear_signal
+            .value_at(3.)
+            .expect("could not evaluate signal at 3"),
+        1.,
+    );
+    assert_eq!(
+        linear_signal
+            .value_at(3.5)
+            .expect("could not evaluate signal at 3.5"),
+        0.75,
     );
 }
