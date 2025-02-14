@@ -1,6 +1,8 @@
 use super::formats::custom::{self, DataPoint};
 
 use anyhow::{anyhow, Error};
+use ndarray::{array, Array, Array1, Array2};
+use ndarray_linalg::Solve;
 
 #[cfg(test)]
 mod test;
@@ -16,6 +18,13 @@ pub enum Signal {
         b: f64,
         y: Vec<f64>,
         dy: Vec<f64>,
+    },
+    Cubic {
+        h: f64,
+        a: f64,
+        b: f64,
+        y: Vec<f64>,
+        m: Vec<f64>,
     },
 }
 
@@ -57,7 +66,8 @@ impl TryFrom<custom::Signal> for Signal {
 
                 Ok(match degree {
                     1 => interpolate_linear(h, a, b, data),
-                    _ => todo!(),
+                    2 => todo!("quadratic interpolation"),
+                    3 => interpolate_cubic(h, a, b, data)?,
                     _ => unreachable!("all other degrees are not allowed"),
                 })
             }
@@ -78,6 +88,45 @@ fn interpolate_linear(h: f64, a: f64, b: f64, data: Vec<f64>) -> Signal {
     Signal::Linear { h, a, b, y, dy }
 }
 
+fn divided_difference(h: &f64, y_l: &f64, y: &f64, y_r: &f64) -> f64 {
+    (y_r - 2. * y + y_l) / (2. * h * h)
+}
+
+fn interpolate_cubic(h: f64, a: f64, b: f64, data: Vec<f64>) -> Result<Signal, Error> {
+    let n = data.len() - 1;
+
+    let mut d = vec![0.; n + 1];
+    d[0] = 6. * divided_difference(&h, &data[0], &data[0], &data[1]);
+    d[n] = 6. * divided_difference(&h, &data[n - 1], &data[n], &data[n]);
+    for i in 1..n - 1 {
+        d[i] = 6. * divided_difference(&h, &data[i - 1], &data[i], &data[i + 1]);
+    }
+    let d = Array::from_vec(d);
+
+    let mat_len = (n + 1) * (n + 1);
+    let mut mat = vec![0.; mat_len];
+    mat[0] = 2.;
+    mat[1] = 1.;
+    for i in 1..n {
+        mat[i * (n + 1) + i - 1] = 0.5;
+        mat[i * (n + 1) + i] = 2.;
+        mat[i * (n + 1) + i + 1] = 0.5;
+    }
+    mat[mat_len - 2] = 1.;
+    mat[mat_len - 1] = 2.;
+    let mat = Array2::from_shape_vec((n + 1, n + 1), mat)?;
+
+    let m = mat.solve(&d)?.to_vec();
+
+    Ok(Signal::Cubic {
+        h,
+        a,
+        b,
+        y: data,
+        m,
+    })
+}
+
 fn get_index(h: &f64, a: &f64, b: &f64, x: &f64) -> Result<usize, Error> {
     if x < a || x > b {
         return Err(anyhow!("{} out of bounds ([{}, {}])", x, a, b));
@@ -93,6 +142,22 @@ impl Signal {
             Signal::Linear { h, a, b, y, dy } => {
                 let i = get_index(h, a, b, &x)?;
                 y[i] + x * dy[i]
+            }
+            Signal::Cubic { h, a, b, y, m } => {
+                if &x == b {
+                    return Ok(y[y.len() - 1]);
+                }
+
+                let i = get_index(h, a, b, &x)? + 1;
+
+                let dx_l = x - (a + (i - 1) as f64 * h);
+                let dx_r = (a + (i) as f64 * h) - x;
+
+                (m[i - 1] * dx_r * dx_r * dx_r
+                    + m[i] * dx_l * dx_l * dx_l
+                    + (6. * y[i - 1] - m[i - 1] * h * h) * dx_r
+                    + (6. * y[i] - m[i] * h * h) * dx_l)
+                    / (6. * h)
             } /*
               Signal::Poly {
                   degree,

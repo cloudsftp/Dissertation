@@ -128,3 +128,42 @@ fn linear_interpolation() {
         0.75,
     );
 }
+
+#[test]
+fn cubic_interpolation() {
+    let data = vec![
+        DataPoint { t: 2., v: 0. },
+        DataPoint { t: 3., v: 1. },
+        DataPoint { t: 4., v: 0.5 },
+        DataPoint { t: 5., v: 0. },
+    ];
+
+    let custom_cubic_signal = custom::Signal::Poly {
+        degree: 3,
+        scale: 1.,
+        data: data.clone(),
+    };
+
+    let cubic_signal: Signal = custom_cubic_signal
+        .try_into()
+        .expect("could not convert linear signal");
+
+    for DataPoint { t, v } in data {
+        let y = cubic_signal
+            .value_at(t)
+            .expect(&format!("could not evaluate signal at {}", t));
+
+        assert!(
+            approx_equal(y, v),
+            "data at {} not approximately the same: {} = {}",
+            t,
+            y,
+            v,
+        )
+    }
+}
+
+const EPSILON: f64 = 1e-6;
+fn approx_equal(a: f64, b: f64) -> bool {
+    (a - b).abs() < EPSILON
+}
