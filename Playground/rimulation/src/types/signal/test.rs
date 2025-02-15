@@ -1,3 +1,5 @@
+use std::{fs, io::Write};
+
 use approx::assert_relative_eq;
 
 use super::*;
@@ -138,6 +140,7 @@ fn cubic_interpolation() {
         DataPoint { t: 3., v: 1. },
         DataPoint { t: 4., v: 0.5 },
         DataPoint { t: 5., v: 0. },
+        DataPoint { t: 6., v: 2. },
     ];
 
     let custom_cubic_signal = custom::Signal::Poly {
@@ -148,13 +151,27 @@ fn cubic_interpolation() {
 
     let cubic_signal: Signal = custom_cubic_signal
         .try_into()
-        .expect("could not convert linear signal");
+        .expect("could not convert cubic signal");
 
-    for DataPoint { t, v } in data {
+    for DataPoint { t, v } in &data {
         let y = cubic_signal
-            .value_at(t)
+            .value_at(*t)
             .expect(&format!("could not evaluate signal at {}", t));
 
         assert_relative_eq!(y, v);
+    }
+
+    let mut file = fs::File::create("/tmp/cubic").unwrap();
+    let n = 1_000;
+    for i in 0..n {
+        let a = data.first().expect("data has at least one element").t;
+        let b = data.last().expect("data has at least one element").t;
+        let t = i as f64 * (b - a) / n as f64 + a;
+
+        let v = cubic_signal
+            .value_at(t)
+            .expect(&format!("could not evaluate signal at {}", t));
+        file.write(format!("{}\n", v).as_bytes())
+            .expect("could not write data to temporary file");
     }
 }

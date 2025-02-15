@@ -1,6 +1,7 @@
 use super::formats::custom::{self, DataPoint};
 
 use anyhow::{anyhow, Error};
+use approx::AbsDiffEq;
 use nalgebra::{DMatrix, DVector};
 
 #[cfg(test)]
@@ -93,26 +94,29 @@ fn divided_difference(h: &f64, y_l: &f64, y: &f64, y_r: &f64) -> f64 {
 fn interpolate_cubic(h: f64, a: f64, b: f64, data: Vec<f64>) -> Result<Signal, Error> {
     let n = data.len() - 1;
 
+    // boundary conditions
+    let dl = 0.;
+    let dr = 0.;
+
     let mut d = vec![0.; n + 1];
-    d[0] = 6. * divided_difference(&h, &data[0], &data[0], &data[1]);
-    d[n] = 6. * divided_difference(&h, &data[n - 1], &data[n], &data[n]);
-    for i in 1..n - 1 {
+    d[0] = 6. * ((data[1] - data[0]) / h - dl) / h;
+    d[n] = 6. * (dr - (data[n] - data[n - 1]) / h) / h;
+    for i in 1..n {
         d[i] = 6. * divided_difference(&h, &data[i - 1], &data[i], &data[i + 1]);
     }
     let d = DVector::from_vec(d);
 
-    let mat_len = (n + 1) * (n + 1);
-    let mut mat = vec![0.; mat_len];
-    mat[0] = 2.;
-    mat[1] = 1.;
-    for i in 1..n {
-        mat[i * (n + 1) + i - 1] = 0.5;
-        mat[i * (n + 1) + i] = 2.;
-        mat[i * (n + 1) + i + 1] = 0.5;
-    }
-    mat[mat_len - 2] = 1.;
-    mat[mat_len - 1] = 2.;
-    let mat = DMatrix::from_vec(n + 1, n + 1, mat);
+    let mat = DMatrix::from_fn(n + 1, n + 1, |i, j| {
+        if i == j {
+            2.
+        } else if (i == 0 && j == 1) || (i == n && j == n - 1) {
+            1.
+        } else if i.abs_diff_eq(&j, 1) {
+            0.5
+        } else {
+            0.
+        }
+    });
 
     let m = mat
         .lu()
