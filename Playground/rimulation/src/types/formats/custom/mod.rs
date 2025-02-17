@@ -1,7 +1,9 @@
 use super::NamedComponent;
 
+use anyhow::{anyhow, Error};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use serde_json::from_reader;
+use std::{collections::HashMap, fs};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Position {
@@ -69,7 +71,7 @@ pub struct Topology {
     pub sources: Vec<Source>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     pub feed_temperature: f64,
     pub return_temperature: f64,
@@ -168,6 +170,20 @@ pub struct Scenario {
 pub struct Network {
     pub topology: Topology,
     pub scenario: Scenario,
+}
+
+pub fn load(path: &str) -> Result<Network, Error> {
+    let topology_file = fs::File::open(format!("{}/topology.json", path))
+        .map_err(|err| anyhow!("could not open topology file: {}", err))?;
+    let topology: Topology =
+        from_reader(topology_file).map_err(|err| anyhow!("could not decode topology: {}", err))?;
+
+    let scenario_file = fs::File::open(format!("{}/scenario.json", path))
+        .map_err(|err| anyhow!("could not open scenario file: {}", err))?;
+    let scenario: Scenario =
+        from_reader(scenario_file).map_err(|err| anyhow!("could not decode scenario: {}", err))?;
+
+    Ok(Network { topology, scenario })
 }
 
 #[cfg(test)]
