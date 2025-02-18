@@ -76,7 +76,7 @@ fn test_from_custom_network() {
         .expect("could not convert custom signal");
 
     assert_eq!(
-        network.nodes,
+        network.nodes().cloned().collect::<Vec<_>>(),
         [
             Node::Zero {
                 name: String::from("N1")
@@ -108,7 +108,7 @@ fn test_from_custom_network() {
     );
 
     assert_eq!(
-        network.edges,
+        network.edges().cloned().collect::<Vec<_>>(),
         [
             (6, 0), // spanning tree edges
             (0, 1),
@@ -337,8 +337,8 @@ fn assert_find_spanning_tree(
 ) {
     let (nodes, edges) = create_test_nodes_and_edges(num_nodes, edges);
 
-    let (spanning_tree, cycle_edges) =
-        find_spanning_tree(&nodes, &edges).expect("could not compute spanning tree");
+    let (start_node_index, spanning_tree, cycle_edges) =
+        find_spanning_tree(nodes.iter(), &edges).expect("could not compute spanning tree");
 
     let expected_spanning_tree = set_of(expected_spanning_tree);
     let expected_cycle_edges =
@@ -426,12 +426,10 @@ fn reordering_demand_nodes() {
         })
         .collect();
 
-    let (nodes, num_demand, edges) = reorder_demand_nodes(nodes, edges);
-
-    assert_eq!(num_demand, 4);
+    let (demand_nodes, pressure_nodes, edges) = split_nodes(nodes, edges);
 
     assert_eq!(
-        nodes,
+        demand_nodes,
         vec![
             Node::Zero {
                 name: String::from("N0"),
@@ -446,6 +444,11 @@ fn reordering_demand_nodes() {
             Node::Zero {
                 name: String::from("N4"),
             },
+        ],
+    );
+    assert_eq!(
+        pressure_nodes,
+        vec![
             Node::Pressure {
                 name: String::from("N1"),
                 pressure: zero.clone(),

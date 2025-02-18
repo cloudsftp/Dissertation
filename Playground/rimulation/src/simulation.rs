@@ -11,8 +11,7 @@ use crate::{
 
 fn initial_energy_densities(network: &Network, settings: &Settings) -> Result<Vec<f64>, Error> {
     network
-        .nodes
-        .iter()
+        .nodes()
         .map(|node| -> Result<f64, anyhow::Error> {
             water::energy_density(match node {
                 Node::Pressure { temperature, .. } => temperature.value_at(0.)?,
@@ -24,6 +23,8 @@ fn initial_energy_densities(network: &Network, settings: &Settings) -> Result<Ve
 
 pub fn simulate(network: Network, settings: Settings) -> Result<(), Error> {
     dbg!(&network);
+
+    /*
 
     let num_edges = network.edges.len();
 
@@ -80,6 +81,8 @@ pub fn simulate(network: Network, settings: Settings) -> Result<(), Error> {
     dbg!(m1);
 
     let v = DVector::from_fn(network.nodes.len(), |i, _| todo!());
+
+    */
 
     todo!();
 }
