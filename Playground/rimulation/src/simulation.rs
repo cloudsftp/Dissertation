@@ -1,5 +1,5 @@
 use anyhow::Error;
-use nalgebra::DVector;
+use nalgebra::{DMatrix, DVector};
 
 use crate::{
     types::{
@@ -26,6 +26,8 @@ pub fn simulate(network: Network, settings: Settings) -> Result<(), Error> {
     dbg!(&network);
 
     let e = DVector::from_vec(initial_energy_densities(&network, &settings)?);
+
+    //let ar_T = DMatrix::from_fn(, ncols, f);
 
     dbg!(&e);
 

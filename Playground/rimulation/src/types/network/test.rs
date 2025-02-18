@@ -73,15 +73,11 @@ fn test_from_custom_network() {
     let scaled_dummy_const_signal: Signal = DUMMY_CONST_CUSTOM_SIGNAL
         .scale_data(DUMMY_CONSUMER_FACTORS.yearly_demand / HOURS_PER_YEAR)
         .try_into()
-        .expect("could not convert suctom signal");
+        .expect("could not convert custom signal");
+
     assert_eq!(
         network.nodes,
         [
-            Node::Pressure {
-                name: String::from("N0"),
-                pressure: DUMMY_CONST_SIGNAL,
-                temperature: DUMMY_CONST_SIGNAL
-            },
             Node::Zero {
                 name: String::from("N1")
             },
@@ -102,6 +98,11 @@ fn test_from_custom_network() {
                 name: String::from("N6"),
                 demand: scaled_dummy_const_signal.clone(),
             },
+            Node::Pressure {
+                name: String::from("N0"),
+                pressure: DUMMY_CONST_SIGNAL,
+                temperature: DUMMY_CONST_SIGNAL
+            },
         ]
         .to_vec()
     );
@@ -109,14 +110,14 @@ fn test_from_custom_network() {
     assert_eq!(
         network.edges,
         [
-            (0, 1), // spanning tree edges
-            (1, 2),
+            (6, 0), // spanning tree edges
+            (0, 1),
+            (0, 3),
             (1, 4),
-            (2, 5),
-            (3, 4),
-            (5, 6),
-            (3, 6), // cycle edges
+            (2, 3),
             (4, 5),
+            (2, 5), // cycle edges
+            (3, 4),
         ]
         .map(|(i, j)| Edge {
             src: i,
@@ -384,73 +385,89 @@ fn test_find_spanning_tree() {
     );
 }
 
-/*
-fn assert_signal_value_at(name: &str, signal: Signal, t: f64, expected: f64) {
+#[test]
+fn reordering_demand_nodes() {
+    let zero = Signal::Const { value: 0. };
+
+    let nodes = vec![
+        Node::Zero {
+            name: String::from("N0"),
+        },
+        Node::Pressure {
+            name: String::from("N1"),
+            pressure: zero.clone(),
+            temperature: zero.clone(),
+        },
+        Node::Demand {
+            name: String::from("N2"),
+            demand: zero.clone(),
+        },
+        Node::Zero {
+            name: String::from("N3"),
+        },
+        Node::Zero {
+            name: String::from("N4"),
+        },
+        Node::Pressure {
+            name: String::from("N5"),
+            pressure: zero.clone(),
+            temperature: zero.clone(),
+        },
+    ];
+
+    let edges = [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 0)];
+
+    let edges: Vec<Edge> = edges
+        .into_iter()
+        .map(|(src, tgt)| Edge {
+            src,
+            tgt,
+            parameters: DUMMY_PIPE_PARAMETERS,
+        })
+        .collect();
+
+    let (nodes, num_demand, edges) = reorder_demand_nodes(nodes, edges);
+
+    assert_eq!(num_demand, 4);
+
     assert_eq!(
-        signal.value_at(t).expect("could not get value at t"),
-        expected,
-        "value of signal was not as expected for test case '{}'",
-        name
-    )
-}
-
-#[test]
-fn test_const_signal_value_at() {
-    assert_signal_value_at(
-        "const 1",
-        Signal::Const {
-            scale: 1.,
-            data: 1.,
-        },
-        0.,
-        1.,
-    );
-    assert_signal_value_at(
-        "const 1 at 100",
-        Signal::Const {
-            scale: 1.,
-            data: 1.,
-        },
-        100.,
-        1.,
-    );
-    assert_signal_value_at(
-        "scaled const 1 at 100",
-        Signal::Const {
-            scale: 1_000.,
-            data: 1.,
-        },
-        100.,
-        1_000.,
-    );
-    assert_signal_value_at(
-        "scaled const 2 at 100",
-        Signal::Const {
-            scale: 1_000.,
-            data: 2.,
-        },
-        100.,
-        2_000.,
-    );
-}
-
-#[test]
-fn test_linear_signal_value_at() {
-    let signal = Signal::Poly {
-        degree: 1,
-        scale: 1.,
-        data: vec![
-            DataPoint { t: 0., v: 0. },
-            DataPoint { t: 1., v: 1. },
-            DataPoint { t: 3., v: 0. },
+        nodes,
+        vec![
+            Node::Zero {
+                name: String::from("N0"),
+            },
+            Node::Demand {
+                name: String::from("N2"),
+                demand: zero.clone(),
+            },
+            Node::Zero {
+                name: String::from("N3"),
+            },
+            Node::Zero {
+                name: String::from("N4"),
+            },
+            Node::Pressure {
+                name: String::from("N1"),
+                pressure: zero.clone(),
+                temperature: zero.clone(),
+            },
+            Node::Pressure {
+                name: String::from("N5"),
+                pressure: zero.clone(),
+                temperature: zero.clone(),
+            },
         ],
-    };
-    assert_signal_value_at("linear outside of bounds: -1", signal.clone(), -1., 0.);
-    assert_signal_value_at("linear at first point", signal.clone(), 0., 0.);
-    assert_signal_value_at("linear at last point", signal.clone(), 3., 0.);
+    );
 
-    assert_signal_value_at("linear at middle point", signal.clone(), 1., 1.);
-    assert_signal_value_at("linear interpolate left middle", signal.clone(), 0.5, 0.5);
-    assert_signal_value_at("linear interpolate right skewed", signal.clone(), 1.5, 0.75);
+    assert_eq!(
+        edges,
+        [(0, 4), (4, 1), (1, 2), (2, 3), (3, 5), (5, 0),]
+            .map(|(i, j)| Edge {
+                src: i,
+                tgt: j,
+                parameters: DUMMY_PIPE_PARAMETERS
+            })
+            .into_iter()
+            .collect::<Vec<_>>()
+    );
 }
-*/

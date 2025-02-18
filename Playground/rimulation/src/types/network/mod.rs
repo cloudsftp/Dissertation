@@ -85,6 +85,7 @@ impl Edge {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Network {
     pub nodes: Vec<Node>,
+    pub num_demand: usize,
     pub edges: Vec<Edge>,
 }
 
@@ -109,8 +110,13 @@ impl TryFrom<custom::Network> for Network {
 
         let (nodes, edges) = extract_feed(nodes, edges)?;
         let edges = reorder_spanning_tree(&nodes, edges)?;
+        let (nodes, num_demand, edges) = reorder_demand_nodes(nodes, edges);
 
-        Ok(Network { nodes, edges })
+        Ok(Network {
+            nodes,
+            num_demand,
+            edges,
+        })
     }
 }
 
@@ -456,4 +462,57 @@ fn reorder_spanning_tree(nodes: &[Node], edges: Vec<Edge>) -> Result<Vec<Edge>, 
         .map(|(_, edge)| edge)
         .cloned()
         .collect())
+}
+
+fn reorder_demand_nodes(nodes: Vec<Node>, edges: Vec<Edge>) -> (Vec<Node>, usize, Vec<Edge>) {
+    let demand_indices: HashSet<usize> = nodes
+        .iter()
+        .enumerate()
+        .filter_map(|(i, node)| match node {
+            Node::Pressure { .. } => None,
+            Node::Demand { .. } => Some(i),
+            Node::Zero { .. } => Some(i),
+        })
+        .collect();
+
+    let mut reordered_nodes = Vec::with_capacity(nodes.len());
+    let mut index_mapping: HashMap<usize, usize> = HashMap::new();
+    let mut j = 0usize;
+
+    let mut insert_node = |(i, node): (usize, &Node)| {
+        reordered_nodes.push(node.clone());
+        index_mapping.insert(i, j);
+        j += 1;
+    };
+
+    nodes
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| demand_indices.contains(i))
+        .for_each(&mut insert_node);
+
+    nodes
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| !demand_indices.contains(i))
+        .for_each(&mut insert_node);
+
+    let edges = edges
+        .into_iter()
+        .map(
+            |Edge {
+                 src,
+                 tgt,
+                 parameters,
+             }| {
+                Edge {
+                    src: index_mapping[&src],
+                    tgt: index_mapping[&tgt],
+                    parameters,
+                }
+            },
+        )
+        .collect();
+
+    (reordered_nodes, demand_indices.len(), edges)
 }
