@@ -25,13 +25,16 @@ fn ar(network: &Network) -> DMatrix<f64> {
 
 fn arp(network: &Network) -> DMatrix<f64> {
     let num_pressure_nodes = network.pressure_nodes.len();
+    let num_demand_nodes = network.demand_nodes.len();
+
     DMatrix::from_iterator(
         network.num_edges(),
         num_pressure_nodes,
         (0..num_pressure_nodes)
             .map(|i| {
-                let i = num_pressure_nodes + i;
+                let i = num_demand_nodes + i;
                 network.edges().map(move |edge| {
+                    dbg!(&edge, &i);
                     if edge.src == i {
                         -1.
                     } else if edge.tgt == i {
@@ -149,7 +152,7 @@ mod tests {
                 .into_iter(),
             )
             .collect();
-        let edges = [(1, 0), (1, 2), (2, 3), (4, 3), (4, 0)]
+        let edges = [(0, 4), (0, 1), (1, 2), (3, 2), (3, 4)]
             .map(|(i, j)| Edge {
                 src: i,
                 tgt: j,
@@ -194,11 +197,11 @@ mod tests {
                 5,
                 4,
                 &[
-                    [1., -1., 0., 0.], // edge 0
-                    [0., -1., 1., 0.], // edge 1
-                    [0., 0., 0., 1.],  // edge 3
-                    [1., 0., 0., 0.],  // edge 4
-                    [0., 0., -1., 1.], // edge 2
+                    [-1., 0., 0., 0.], // edge 0
+                    [-1., 1., 0., 0.], // edge 1
+                    [0., 0., 1., -1.], // edge 3
+                    [0., 0., 0., -1.], // edge 4
+                    [0., -1., 1., 0.], // edge 2
                 ]
                 .concat()
             )
@@ -210,7 +213,7 @@ mod tests {
         let network = create_test_net();
 
         let arp = arp(&network);
-        assert_eq!(arp, DMatrix::from_row_slice(5, 1, &[0., 0., -1., -1., 0.]))
+        assert_eq!(arp, DMatrix::from_row_slice(5, 1, &[1., 0., 0., 1., 0.]))
     }
 
     #[test]
