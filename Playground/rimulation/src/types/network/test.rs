@@ -42,7 +42,7 @@ fn create_test_nodes_and_edges(
 }
 
 #[test]
-fn test_from_custom_network() {
+fn from_custom_network() {
     let feed_edges = [
         (0, 1),
         (1, 2),
@@ -132,7 +132,7 @@ fn test_from_custom_network() {
 }
 
 #[test]
-fn test_extract_nodes() {
+fn extract_nodes_of_custom_net() {
     let custom_net = custom::test_util::create_test_net(10, 5, &[(0, 1), (1, 2)], &[3, 4], &[0]);
 
     let nodes = extract_nodes(&custom_net).expect("could not extract nodes from custom net");
@@ -169,7 +169,7 @@ fn test_extract_nodes() {
 }
 
 #[test]
-fn test_extract_edges() {
+fn extract_edges_of_custom_net() {
     let edge_tuples = [(0, 1), (1, 2), (2, 3), (2, 4), (3, 4)];
     let custom_net = custom::test_util::create_test_net(10, 5, &edge_tuples, &[3, 4], &[0]);
 
@@ -218,7 +218,7 @@ fn assert_find_feed(
 }
 
 #[test]
-fn test_find_feed() {
+fn find_feed_of_network() {
     assert_find_feed("one edge", 2, &[(0, 1)], 0, &[0, 1], &[0]);
     assert_find_feed(
         "small loop",
@@ -331,20 +331,83 @@ fn test_filter_network() {
     );
 }
 
+#[test]
+fn from_feed() {
+    let pressure_nodes = vec![Node::Pressure {
+        name: String::from("N0"),
+        pressure: DUMMY_CONST_SIGNAL,
+        temperature: DUMMY_CONST_SIGNAL,
+    }];
+    let demand_nodes: Vec<Node> = (1..5)
+        .map(|i| Node::Demand {
+            name: format!("N{}", i),
+            demand: DUMMY_CONST_SIGNAL,
+        })
+        .collect();
+    let nodes = [pressure_nodes.clone(), demand_nodes.clone()].concat();
+
+    let edges = [(0, 1), (0, 2), (1, 3), (1, 4), (4, 2)]
+        .map(|(i, j)| Edge {
+            src: i,
+            tgt: j,
+            parameters: DUMMY_PIPE_PARAMETERS,
+        })
+        .to_vec();
+
+    let network = Network::try_from_feed(nodes, edges).expect("could not compute the network");
+
+    let expected_spanning_tree_edges = [(4, 0), (4, 1), (0, 2), (0, 3)];
+
+    assert_eq!(
+        network,
+        Network {
+            demand_nodes,
+            pressure_nodes,
+            root_node_index: 4,
+            spanning_tree_edges: expected_spanning_tree_edges
+                .map(|(i, j)| Edge {
+                    src: i,
+                    tgt: j,
+                    parameters: DUMMY_PIPE_PARAMETERS,
+                })
+                .to_vec(),
+            cycle_edges: vec![Edge {
+                src: 3,
+                tgt: 1,
+                parameters: DUMMY_PIPE_PARAMETERS
+            }],
+            pred_nodes: [(0, 4), (1, 4), (2, 0), (3, 0)].into_iter().collect(),
+            edge_indices_by_connected_nodes: expected_spanning_tree_edges
+                .iter()
+                .enumerate()
+                .map(
+                    |(i, (src, tgt))| [((*src, *tgt), (i, false)), ((*tgt, *src), (i, true)),]
+                        .into_iter()
+                )
+                .flatten()
+                .collect(),
+        }
+    );
+}
+
 fn assert_find_spanning_tree(
     name: &str,
     num_nodes: usize,
     edges: &[(usize, usize)],
     expected_spanning_tree: &[usize],
+    expected_pred_nodes: &[(usize, usize)],
 ) {
     let (nodes, edges) = create_test_nodes_and_edges(num_nodes, edges);
 
-    let (_, spanning_tree, cycle_edges, _) = // TODO: test prev
-        find_spanning_tree(nodes.iter(), &edges).expect("could not compute spanning tree");
+    let (root_node_index, spanning_tree, cycle_edges, pred_nodes) =
+        find_spanning_tree(&nodes, &edges).expect("could not compute spanning tree");
 
     let expected_spanning_tree = set_of(expected_spanning_tree);
     let expected_cycle_edges =
         HashSet::from_iter((0..edges.len()).filter(|i| !expected_spanning_tree.contains(i)));
+
+    assert_eq!(root_node_index, 0);
+
     assert_eq!(
         spanning_tree, expected_spanning_tree,
         "spanning tree unexpected for the test case '{}'",
@@ -355,14 +418,28 @@ fn assert_find_spanning_tree(
         cycle_edges, expected_cycle_edges,
         "cycle edges unexpected for the test case '{}'",
         name,
-    )
+    );
+
+    assert_eq!(pred_nodes, expected_pred_nodes.iter().cloned().collect());
 }
 
 #[test]
-fn test_find_spanning_tree() {
-    assert_find_spanning_tree("single edge", 2, &[(0, 1)], &[0]);
-    assert_find_spanning_tree("two edges", 3, &[(0, 1), (0, 2)], &[0, 1]);
-    assert_find_spanning_tree("small cycle", 3, &[(0, 1), (0, 2), (1, 2)], &[0, 1]);
+fn find_spanning_tree_of_net() {
+    assert_find_spanning_tree("single edge", 2, &[(0, 1)], &[0], &[(1, 0)]);
+    assert_find_spanning_tree(
+        "two edges",
+        3,
+        &[(0, 1), (0, 2)],
+        &[0, 1],
+        &[(1, 0), (2, 0)],
+    );
+    assert_find_spanning_tree(
+        "small cycle",
+        3,
+        &[(0, 1), (0, 2), (1, 2)],
+        &[0, 1],
+        &[(2, 1), (2, 0), (1, 0)],
+    );
     assert_find_spanning_tree(
         "two cycles",
         8,
@@ -378,12 +455,14 @@ fn test_find_spanning_tree() {
             (7, 1),
         ],
         &[0, 1, 2, 3, 4, 7, 8],
+        &[(1, 0), (2, 1), (3, 2), (4, 2), (5, 3), (7, 1), (6, 7)],
     );
     assert_find_spanning_tree(
         "two cycles",
         8,
         &[(0, 2), (0, 1), (1, 2), (1, 3), (2, 3), (2, 4)],
         &[0, 1, 4, 5],
+        &[(1, 0), (2, 0), (3, 2), (4, 2)],
     );
 }
 
@@ -475,82 +554,4 @@ fn reordering_demand_nodes() {
             .into_iter()
             .collect::<Vec<_>>()
     );
-}
-
-#[test]
-fn from_feed() {
-    // TODO: also test reordering
-    /*
-    let demand_nodes = vec![
-        Node::Zero {
-            name: String::from("N1"),
-        },
-        Node::Zero {
-            name: String::from("N2"),
-        },
-        Node::Demand {
-            name: String::from("N3"),
-            demand: DUMMY_CONST_SIGNAL,
-        },
-        Node::Zero {
-            name: String::from("N4"),
-        },
-    ];
-    let pressure_nodes = vec![Node::Pressure {
-        name: String::from("N0"),
-        pressure: DUMMY_CONST_SIGNAL,
-        temperature: DUMMY_CONST_SIGNAL,
-    }];
-
-    let spanning_tree_edges = [(1, 0), (1, 2), (4, 3), (4, 0)];
-
-    let network = Network::try_from_feed(
-        pressure_nodes
-            .iter()
-            .chain(demand_nodes.iter())
-            .cloned()
-            .collect(),
-        spanning_tree_edges
-            .iter()
-            .chain([(1, 2)].iter())
-            .map(|(i, j)| Edge {
-                src: *i,
-                tgt: *j,
-                parameters: DUMMY_PIPE_PARAMETERS,
-            })
-            .collect(),
-    )
-    .expect("could not compute network from feed nodes and edges");
-
-    let expected = Network {
-        demand_nodes,
-        pressure_nodes,
-        root_node_index: 0,
-        spanning_tree_edges: spanning_tree_edges
-            .map(|(i, j)| Edge {
-                src: i,
-                tgt: j,
-                parameters: DUMMY_PIPE_PARAMETERS,
-            })
-            .to_vec(),
-        cycle_edges: vec![Edge {
-            src: 1,
-            tgt: 2,
-            parameters: DUMMY_PIPE_PARAMETERS,
-        }],
-        pred_nodes: [(1usize, 0usize), (2, 1), (3, 4), (4, 0)]
-            .into_iter()
-            .collect(),
-        edge_indices_by_connected_nodes: spanning_tree_edges
-            .iter()
-            .enumerate()
-            .map(|(i, (src, tgt))| {
-                [((*src, *tgt), (i, false)), ((*tgt, *src), (i, true))].into_iter()
-            })
-            .flatten()
-            .collect(),
-    };
-
-    assert_eq!(network, expected);
-    */
 }

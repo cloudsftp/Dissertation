@@ -82,47 +82,29 @@ mod hydraulic {
 
     #[cfg(test)]
     mod tests {
-        use crate::types::network::{
-            test::{DUMMY_CONST_SIGNAL, DUMMY_PIPE_PARAMETERS},
-            Edge, Node,
-        };
-
         use super::*;
+
+        use crate::types::network::{test::DUMMY_PIPE_PARAMETERS, Edge, Node};
 
         #[test]
         fn compute_ac_from_net() {
-            let nodes = vec![
-                Node::Zero {
-                    name: String::from("N0"),
-                },
-                Node::Zero {
-                    name: String::from("N1"),
-                },
-                Node::Zero {
-                    name: String::from("N2"),
-                },
-                Node::Zero {
-                    name: String::from("N3"),
-                },
-                Node::Zero {
-                    name: String::from("N4"),
-                },
-            ];
-            let edges = [(1, 0), (1, 2), (2, 3), (4, 3), (4, 0)];
-            let network = Network::try_from_feed(
-                nodes,
-                edges
-                    .map(|(i, j)| Edge {
-                        src: i,
-                        tgt: j,
-                        parameters: DUMMY_PIPE_PARAMETERS,
-                    })
-                    .to_vec(),
-            )
-            .expect("could not compute network from feed nodes and edges");
+            let nodes = (0..5)
+                .map(|i| Node::Zero {
+                    name: format!("N{}", i),
+                })
+                .collect();
+            let edges = [(1, 0), (1, 2), (2, 3), (4, 3), (4, 0)]
+                .map(|(i, j)| Edge {
+                    src: i,
+                    tgt: j,
+                    parameters: DUMMY_PIPE_PARAMETERS,
+                })
+                .to_vec();
+
+            let network = Network::try_from_feed(nodes, edges)
+                .expect("could not compute network from feed nodes and edges");
 
             let ac = compute_ac(&network).expect("could not comput A_C matrix");
-
             assert_eq!(ac, DMatrix::from_vec(1, 5, vec![-1., 1., -1., 1., 1.]));
         }
     }

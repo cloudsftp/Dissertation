@@ -98,8 +98,10 @@ impl Network {
     pub fn try_from_feed(nodes: Vec<Node>, edges: Vec<Edge>) -> Result<Self, Error> {
         let (demand_nodes, pressure_nodes, edges) = split_nodes(nodes, edges);
 
-        let (root_node_index, spanning_tree_edges, cycle_edges, pred_nodes) =
-            split_edges(demand_nodes.iter().chain(pressure_nodes.iter()), edges)?;
+        let (root_node_index, spanning_tree_edges, cycle_edges, pred_nodes) = split_edges(
+            [demand_nodes.clone(), pressure_nodes.clone()].concat(),
+            edges,
+        )?;
 
         let edge_indices_by_connected_nodes: HashMap<(usize, usize), (usize, bool)> =
             spanning_tree_edges
@@ -260,12 +262,12 @@ fn split_nodes(nodes: Vec<Node>, edges: Vec<Edge>) -> (Vec<Node>, Vec<Node>, Vec
     (demand_nodes, pressure_nodes, edges)
 }
 
-fn split_edges<'a>(
-    nodes: impl Iterator<Item = &'a Node>,
+fn split_edges(
+    nodes: Vec<Node>,
     edges: Vec<Edge>,
 ) -> Result<(usize, Vec<Edge>, Vec<Edge>, HashMap<usize, usize>), Error> {
     let (root_node_index, spanning_tree_edge_indices, cycle_edge_indices, pred_nodes) =
-        find_spanning_tree(nodes, &edges)?;
+        find_spanning_tree(&nodes, &edges)?;
 
     let spanning_tree_edges = edges
         .iter()
@@ -438,11 +440,9 @@ fn extract_edges(value: &custom::Network, nodes: &[Node]) -> Result<Vec<Edge>, E
         .collect()
 }
 
-fn get_adjacent_edges<'a>(
-    nodes: impl Iterator<Item = &'a Node>,
-    edges: &[Edge],
-) -> HashMap<usize, Vec<usize>> {
+fn get_adjacent_edges(nodes: &[Node], edges: &[Edge]) -> HashMap<usize, Vec<usize>> {
     nodes
+        .iter()
         .enumerate()
         .map(|(node_idx, _)| {
             (
@@ -492,7 +492,7 @@ fn find_feed(
     edges: &[Edge],
     start_node: usize,
 ) -> Result<(HashSet<usize>, HashSet<usize>), Error> {
-    let adjacent_edges = get_adjacent_edges(nodes.iter(), edges);
+    let adjacent_edges = get_adjacent_edges(nodes, edges);
 
     let mut feed_nodes = HashSet::new();
     let mut feed_edges = HashSet::new();
@@ -573,8 +573,8 @@ fn extract_feed(nodes: Vec<Node>, edges: Vec<Edge>) -> Result<(Vec<Node>, Vec<Ed
     filter_network(nodes, edges, nodes_to_keep, edges_to_keep)
 }
 
-fn find_spanning_tree<'a>(
-    nodes: impl Iterator<Item = &'a Node>,
+fn find_spanning_tree(
+    nodes: &[Node],
     edges: &[Edge],
 ) -> Result<(usize, HashSet<usize>, HashSet<usize>, HashMap<usize, usize>), Error> {
     let adjacent_edges = get_adjacent_edges(nodes, edges);
@@ -583,7 +583,12 @@ fn find_spanning_tree<'a>(
     let mut cycle_edges = HashSet::new();
     let mut pred_nodes = HashMap::new();
 
-    let start_node = 0;
+    let start_node = nodes
+        .iter()
+        .enumerate()
+        .find(|(_, node)| matches!(node, Node::Pressure { .. }))
+        .map(|(i, _)| i)
+        .unwrap_or(0);
     let mut work = VecDeque::new();
 
     let enqueue_work_items =
