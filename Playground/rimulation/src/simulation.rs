@@ -1,5 +1,4 @@
 use anyhow::Error;
-use nalgebra::{DMatrix, DVector};
 
 use crate::{
     types::{
@@ -35,7 +34,33 @@ mod hydraulic {
             let j = network.spanning_tree_edges.len() + i;
             set_matrix_element(i, j, 1.)?;
 
-            todo!()
+            let mut walk_cycle = |c: &usize, invert| -> Result<(), Error> {
+                let mut c = c;
+                while *c != network.root_node_index {
+                    let p = network
+                        .pred_nodes
+                        .get(c)
+                        .ok_or(anyhow!("could not find predecessor of node {}", c))?;
+
+                    let (j, reversed) = network
+                        .edge_indices_by_connected_nodes
+                        .get(&(*p, *c))
+                        .ok_or(anyhow!(
+                            "could not get the index of the edge connecting the nodes {} and {}",
+                            c,
+                            p,
+                        ))?;
+
+                    set_matrix_element(i, *j, if *reversed != invert { -1. } else { 1. })?;
+
+                    c = p;
+                }
+
+                Ok(())
+            };
+
+            walk_cycle(&cycle_edge.src, false)?;
+            walk_cycle(&cycle_edge.tgt, true)?;
         }
 
         Ok(ac)
@@ -57,11 +82,48 @@ mod hydraulic {
 
     #[cfg(test)]
     mod tests {
+        use crate::types::network::{
+            test::{DUMMY_CONST_SIGNAL, DUMMY_PIPE_PARAMETERS},
+            Edge, Node,
+        };
+
         use super::*;
 
         #[test]
         fn compute_ac_from_net() {
-            let network = todo!();
+            let nodes = vec![
+                Node::Zero {
+                    name: String::from("N0"),
+                },
+                Node::Zero {
+                    name: String::from("N1"),
+                },
+                Node::Zero {
+                    name: String::from("N2"),
+                },
+                Node::Zero {
+                    name: String::from("N3"),
+                },
+                Node::Zero {
+                    name: String::from("N4"),
+                },
+            ];
+            let edges = [(1, 0), (1, 2), (2, 3), (4, 3), (4, 0)];
+            let network = Network::try_from_feed(
+                nodes,
+                edges
+                    .map(|(i, j)| Edge {
+                        src: i,
+                        tgt: j,
+                        parameters: DUMMY_PIPE_PARAMETERS,
+                    })
+                    .to_vec(),
+            )
+            .expect("could not compute network from feed nodes and edges");
+
+            let ac = compute_ac(&network).expect("could not comput A_C matrix");
+
+            assert_eq!(ac, DMatrix::from_vec(1, 5, vec![-1., 1., -1., 1., 1.]));
         }
     }
 }
