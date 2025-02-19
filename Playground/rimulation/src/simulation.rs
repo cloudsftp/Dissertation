@@ -9,6 +9,63 @@ use crate::{
     water,
 };
 
+mod hydraulic {
+    use anyhow::{anyhow, Error};
+    use nalgebra::DMatrix;
+
+    use crate::types::network::Network;
+
+    fn compute_ac(network: &Network) -> Result<DMatrix<f64>, Error> {
+        let mut ac = DMatrix::from_element(network.num_cycles(), network.num_nodes(), 0.);
+        let mut set_matrix_element = |i, j, v| {
+            let index = j * network.num_cycles() + i;
+            if index < network.num_cycles() * network.num_nodes() {
+                ac[index] = v;
+                Ok(())
+            } else {
+                Err(anyhow!(
+                    "index out of range when setting matrix element {}, {}",
+                    i,
+                    j,
+                ))
+            }
+        };
+
+        for (i, cycle_edge) in network.cycle_edges.iter().enumerate() {
+            let j = network.spanning_tree_edges.len() + i;
+            set_matrix_element(i, j, 1.)?;
+
+            todo!()
+        }
+
+        Ok(ac)
+    }
+
+    struct Matrices {
+        ac: DMatrix<f64>,
+    }
+
+    impl TryFrom<Network> for Matrices {
+        type Error = Error;
+
+        fn try_from(network: Network) -> Result<Self, Self::Error> {
+            let ac = compute_ac(&network)?;
+
+            Ok(Self { ac })
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn compute_ac_from_net() {
+            let network = todo!();
+        }
+    }
+}
+
 fn initial_energy_densities(network: &Network, settings: &Settings) -> Result<Vec<f64>, Error> {
     network
         .nodes()

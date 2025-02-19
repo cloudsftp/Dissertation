@@ -106,6 +106,7 @@ fn test_from_custom_network() {
         ]
         .to_vec()
     );
+    assert_eq!(network.demand_nodes.len(), 6);
 
     assert_eq!(
         network.edges().cloned().collect::<Vec<_>>(),
@@ -127,6 +128,7 @@ fn test_from_custom_network() {
         .into_iter()
         .collect::<Vec<_>>()
     );
+    assert_eq!(network.spanning_tree_edges.len(), 6);
 }
 
 #[test]
@@ -337,7 +339,7 @@ fn assert_find_spanning_tree(
 ) {
     let (nodes, edges) = create_test_nodes_and_edges(num_nodes, edges);
 
-    let (start_node_index, spanning_tree, cycle_edges) =
+    let (_, spanning_tree, cycle_edges, _) = // TODO: test prev
         find_spanning_tree(nodes.iter(), &edges).expect("could not compute spanning tree");
 
     let expected_spanning_tree = set_of(expected_spanning_tree);

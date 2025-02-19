@@ -89,6 +89,8 @@ pub struct Network {
     pub root_node_index: usize,
     pub spanning_tree_edges: Vec<Edge>,
     pub cycle_edges: Vec<Edge>,
+    pub pred_nodes: HashMap<usize, usize>,
+    pub edge_indices_by_connected_nodes: HashMap<(usize, usize), (usize, bool)>,
     // Future: pressure_edges
 }
 
@@ -150,8 +152,8 @@ fn split_nodes(nodes: Vec<Node>, edges: Vec<Edge>) -> (Vec<Node>, Vec<Node>, Vec
 fn split_edges<'a>(
     nodes: impl Iterator<Item = &'a Node>,
     edges: Vec<Edge>,
-) -> Result<(usize, Vec<Edge>, Vec<Edge>), Error> {
-    let (root_node_index, spanning_tree_edge_indices, cycle_edge_indices) =
+) -> Result<(usize, Vec<Edge>, Vec<Edge>, HashMap<usize, usize>), Error> {
+    let (root_node_index, spanning_tree_edge_indices, cycle_edge_indices, prev) =
         find_spanning_tree(nodes, &edges)?;
 
     let spanning_tree_edges = edges
@@ -168,7 +170,7 @@ fn split_edges<'a>(
         .map(|(_, edge)| edge.clone())
         .collect();
 
-    Ok((root_node_index, spanning_tree_edges, cycle_edges))
+    Ok((root_node_index, spanning_tree_edges, cycle_edges, prev))
 }
 
 impl TryFrom<custom::Network> for Network {
@@ -193,8 +195,22 @@ impl TryFrom<custom::Network> for Network {
         let (nodes, edges) = extract_feed(nodes, edges)?;
         let (demand_nodes, pressure_nodes, edges) = split_nodes(nodes, edges);
 
-        let (root_node_index, spanning_tree_edges, cycle_edges) =
+        let (root_node_index, spanning_tree_edges, cycle_edges, pred_nodes) =
             split_edges(demand_nodes.iter().chain(pressure_nodes.iter()), edges)?;
+
+        let edge_indices_by_connected_nodes: HashMap<(usize, usize), (usize, bool)> =
+            spanning_tree_edges
+                .iter()
+                .enumerate()
+                .map(|(i, edge)| {
+                    [
+                        ((edge.src, edge.tgt), (i, false)),
+                        ((edge.tgt, edge.src), (i, true)),
+                    ]
+                    .into_iter()
+                })
+                .flatten()
+                .collect();
 
         Ok(Network {
             demand_nodes,
@@ -202,6 +218,8 @@ impl TryFrom<custom::Network> for Network {
             root_node_index,
             spanning_tree_edges,
             cycle_edges,
+            pred_nodes,
+            edge_indices_by_connected_nodes,
         })
     }
 }
@@ -493,11 +511,12 @@ fn extract_feed(nodes: Vec<Node>, edges: Vec<Edge>) -> Result<(Vec<Node>, Vec<Ed
 fn find_spanning_tree<'a>(
     nodes: impl Iterator<Item = &'a Node>,
     edges: &[Edge],
-) -> Result<(usize, HashSet<usize>, HashSet<usize>), Error> {
+) -> Result<(usize, HashSet<usize>, HashSet<usize>, HashMap<usize, usize>), Error> {
     let adjacent_edges = get_adjacent_edges(nodes, edges);
 
     let mut spanning_tree = HashSet::new();
     let mut cycle_edges = HashSet::new();
+    let mut prev = HashMap::new();
 
     let start_node = 0;
     let mut work = VecDeque::new();
@@ -526,10 +545,11 @@ fn find_spanning_tree<'a>(
 
         spanning_tree.insert(edge_idx);
         visited_nodes.insert(next_node_idx);
+        prev.insert(next_node_idx, current_node_idx);
         enqueue_work_items(&mut work, &spanning_tree, next_node_idx);
     }
 
-    Ok((start_node, spanning_tree, cycle_edges))
+    Ok((start_node, spanning_tree, cycle_edges, prev))
 }
 
 impl Network {
@@ -541,5 +561,49 @@ impl Network {
         self.spanning_tree_edges
             .iter()
             .chain(self.cycle_edges.iter())
+    }
+
+    pub fn get_node(&self, i: usize) -> Result<&Node, Error> {
+        let num_demand_nodes = self.demand_nodes.len();
+        let num_pressure_nodes = self.pressure_nodes.len();
+        if i < num_demand_nodes {
+            Ok(&self.demand_nodes[i])
+        } else if i - num_demand_nodes < num_pressure_nodes {
+            Ok(&self.pressure_nodes[i - num_demand_nodes])
+        } else {
+            Err(anyhow!(
+                "index {} out of range, only have {} nodes",
+                i,
+                num_demand_nodes + num_pressure_nodes,
+            ))
+        }
+    }
+
+    pub fn get_edge(&self, i: usize) -> Result<&Edge, Error> {
+        let num_spanning_tree_edges = self.spanning_tree_edges.len();
+        let num_cycle_edges = self.cycle_edges.len();
+        if i < num_spanning_tree_edges {
+            Ok(&self.spanning_tree_edges[i])
+        } else if i - num_spanning_tree_edges < num_cycle_edges {
+            Ok(&self.cycle_edges[i - num_spanning_tree_edges])
+        } else {
+            Err(anyhow!(
+                "index {} out of range, only have {} edges",
+                i,
+                num_spanning_tree_edges + num_cycle_edges,
+            ))
+        }
+    }
+
+    pub fn num_cycles(&self) -> usize {
+        self.cycle_edges.len()
+    }
+
+    pub fn num_edges(&self) -> usize {
+        self.spanning_tree_edges.len() + self.cycle_edges.len()
+    }
+
+    pub fn num_nodes(&self) -> usize {
+        self.demand_nodes.len() + self.pressure_nodes.len()
     }
 }
