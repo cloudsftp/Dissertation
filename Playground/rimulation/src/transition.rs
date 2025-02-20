@@ -28,13 +28,12 @@ pub fn transition_fast(x: f64, l: f64, r: f64, yl: f64, dyl: f64, yr: f64, dyr: 
 
     let a = yl;
     let b = dyl;
-    let c = -3. * yl - 2. * dyl + 3. * yr - dyr;
     let d = 2. * yl + dyl - 2. * yr + dyr;
+    let c = -3. * yl - 2. * dyl + 3. * yr - dyr;
 
     poly(x, &[a, b, c, d])
 }
 
-/*
 #[cfg(test)]
 mod tests {
     use approx::assert_relative_eq;
@@ -43,7 +42,7 @@ mod tests {
 
     #[test]
     fn transition_values() {
-        let n = 1000usize;
+        let n = 10usize;
         let dx = 2.;
 
         let yl = 0.;
@@ -53,13 +52,12 @@ mod tests {
 
         for i in 0..n {
             let x = -dx + i as f64 * 2. * dx / n as f64;
-            let y_og = transition(x, -dx, dx, yl, dyl, yr, dyr);
-            let y = transition_fast(x, -dx, dx, yl, dyl, yr, dyr);
+            let y = transition(x, -dx, dx, yl, dyl, yr, dyr);
+            let y_fast = transition_fast(x, -dx, dx, yl, dyl, yr, dyr);
 
             dbg!(i);
 
-            assert_relative_eq!(y_og, y);
+            assert_relative_eq!(y, y_fast);
         }
     }
 }
-*/

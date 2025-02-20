@@ -3,7 +3,7 @@ use std::{fs, io::Write};
 use anyhow::Error;
 use rimulation::{
     simulation::simulate,
-    transition::{transition, transition_og},
+    transition::{transition, transition_fast},
     types::{formats::custom::load, network::Network},
 };
 
@@ -24,15 +24,16 @@ fn trans() -> Result<(), Error> {
     let dx = 2.;
 
     let yl = 0.;
-    let dyl = 0.5;
+    let dyl = 0.;
     let yr = 1.;
-    let dyr = 2.;
+    let dyr = 0.5;
 
     for i in 0..n {
         let x = -dx + i as f64 * 2. * dx / n as f64;
         let y = transition(x, -dx, dx, yl, dyl, yr, dyr);
+        let y_fast = transition_fast(x, -dx, dx, yl, dyl, yr, dyr);
 
-        file.write(format!("{} {}\n", x, y).as_bytes())?;
+        file.write(format!("{} {} {}\n", x, y, y_fast).as_bytes())?;
     }
 
     Ok(())
