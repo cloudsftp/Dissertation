@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Error};
-use nalgebra::ComplexField;
 
 const T2: f64 = 59.2453;
 const T2_2: f64 = 2. * T2;
@@ -25,4 +24,14 @@ pub fn energy_density(t: f64) -> Result<f64, Error> {
         ));
     }
     Ok((-T1 + d.sqrt()) / T2_2)
+}
+
+const NU4: f64 = 11.9285;
+const NU3: f64 = -22.8079;
+const NU2: f64 = 17.6559;
+const NU1: f64 = -7.00355;
+const NU0: f64 = 1.42624;
+
+pub fn viscousity(e: f64) -> f64 {
+    (((NU4 * e + NU3) * e + NU2) * e + NU1) * e + NU0
 }

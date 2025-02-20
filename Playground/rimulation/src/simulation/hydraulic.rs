@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Error};
-use nalgebra::DMatrix;
+use nalgebra::{stack, DMatrix, DVector};
 
 use crate::types::network::Network;
 
@@ -46,6 +46,13 @@ fn arp(network: &Network) -> DMatrix<f64> {
             })
             .flatten(),
     )
+}
+
+fn ai(network: &Network) -> DMatrix<f64> {
+    let ar = ar(network);
+    let arp = arp(network);
+
+    stack![ar, arp]
 }
 
 fn at(network: &Network) -> DMatrix<f64> {
@@ -110,7 +117,15 @@ fn ac(network: &Network) -> Result<DMatrix<f64>, Error> {
     Ok(ac)
 }
 
+fn dinv(network: &Network) -> DMatrix<f64> {
+    DMatrix::from_diagonal(&DVector::from_iterator(
+        network.num_edges(),
+        network.edges().map(|edge| 1. / edge.parameters.diameter),
+    ))
+}
+
 pub struct Matrices {
+    pub ai: DMatrix<f64>,
     pub ar: DMatrix<f64>,
     pub at: DMatrix<f64>,
     pub ac: DMatrix<f64>,
@@ -122,10 +137,11 @@ impl TryFrom<&Network> for Matrices {
     fn try_from(network: &Network) -> Result<Self, Self::Error> {
         let ar = ar(network);
         let arp = arp(network);
+        let ai = ai(network);
         let at = at(network);
         let ac = ac(network)?;
 
-        Ok(Self { ar, at, ac })
+        Ok(Self { ai, ar, at, ac })
     }
 }
 
@@ -214,6 +230,28 @@ mod tests {
 
         let arp = arp(&network);
         assert_eq!(arp, DMatrix::from_row_slice(5, 1, &[1., 0., 0., 1., 0.]))
+    }
+
+    #[test]
+    fn compute_ai() {
+        let network = create_test_net();
+
+        let ai = ai(&network);
+        assert_eq!(
+            ai,
+            DMatrix::from_row_slice(
+                5,
+                5,
+                &[
+                    [-1., 0., 0., 0., 1.], // edge 0
+                    [-1., 1., 0., 0., 0.], // edge 1
+                    [0., 0., 1., -1., 0.], // edge 3
+                    [0., 0., 0., -1., 1.], // edge 4
+                    [0., -1., 1., 0., 0.], // edge 2
+                ]
+                .concat()
+            )
+        )
     }
 
     #[test]
