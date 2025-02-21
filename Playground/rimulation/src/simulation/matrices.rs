@@ -8,14 +8,14 @@ use crate::{
 };
 
 fn reynold(edge: &Edge, e: f64, v: f64) -> f64 {
-    v.abs() * edge.parameters.length / water::viscousity(e)
+    v.abs() * edge.parameters.length / water::viscosity(e)
 }
 
 fn lambda(edge: &Edge, e: f64, v: f64) -> f64 {
-    darcey_friction(edge, reynold(edge, e, v))
+    darcy_friction(edge, reynold(edge, e, v))
 }
 
-fn darcey_friction(edge: &Edge, re: f64) -> f64 {
+fn darcy_friction(edge: &Edge, re: f64) -> f64 {
     let laminar = 64. / re;
 
     // serghides's solution
@@ -98,7 +98,6 @@ fn arp(network: &Network) -> DMatrix<f64> {
             .map(|i| {
                 let i = num_demand_nodes + i;
                 network.edges().map(move |edge| {
-                    dbg!(&edge, &i);
                     if edge.src == i {
                         -1.
                     } else if edge.tgt == i {
@@ -356,7 +355,7 @@ mod tests {
     }
 
     #[test]
-    fn generate_darcey_friction_factors() {
+    fn generate_darcy_friction_factors() {
         let mut file = fs::File::create("/tmp/darcey_friction_data").expect("could not open file");
 
         let n = 10_000usize;
@@ -378,7 +377,7 @@ mod tests {
 
         for i in 0..n {
             let re = l + i as f64 * (r - l) / n as f64;
-            let lambda = darcey_friction(edge, re);
+            let lambda = darcy_friction(edge, re);
 
             file.write(format!("{} {}\n", re, lambda).as_bytes())
                 .expect("could not write to file");

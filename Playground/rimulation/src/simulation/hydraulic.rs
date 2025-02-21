@@ -6,8 +6,14 @@ use crate::{
     water,
 };
 
+/// Computes the Reynolds number Re for a given pipe
+///
+/// # Arguments
+/// * `edge` - The edge containing pipe parameters
+/// * `v` - Speed of water in the pipe
+/// * `e` - Average energy density of the water
 fn reynold(edge: &Edge, v: f64, e: f64) -> f64 {
-    v * edge.parameters.length / water::viscousity(e)
+    v * edge.parameters.length / water::viscosity(e)
 }
 
 fn lambda(network: &Network, v: DVector<f64>, e: DVector<f64>) -> DMatrix<f64> {

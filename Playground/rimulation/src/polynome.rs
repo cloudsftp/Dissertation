@@ -1,7 +1,22 @@
-pub fn poly(x: f64, factors: &[f64]) -> f64 {
+/// Evaluates a polynomial using Horner's method.
+///
+/// # Arguments
+/// * `x` - The value at which to evaluate the polynomial
+/// * `coefficients` - Coefficients of the polynomial in ascending order of degree
+///   (i.e., [a, b, c, ...] for polynomial a + b x + c x^2 + ...)
+///
+/// # Example
+/// ```
+/// use rimulation::polynome::poly;
+///
+/// let x = 2.0;
+/// let result = poly(x, &[1.0, 2.0, 3.0]);
+/// assert_eq!(result, 1. + 2. * x + 3. * x.powi(2))
+/// ```
+pub fn poly(x: f64, coefficients: &[f64]) -> f64 {
     let mut y = 0.;
 
-    for f in factors.iter().rev() {
+    for f in coefficients.iter().rev() {
         y *= x;
         y += *f;
     }
