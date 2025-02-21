@@ -16,7 +16,7 @@ fn lambda(edge: &Edge, e: f64, v: f64) -> f64 {
 }
 
 fn darcy_friction(edge: &Edge, re: f64) -> f64 {
-    let laminar = 64. / re;
+    let laminar = |re| 64. / re;
 
     // serghides's solution
     let turbulent = |re: f64| {
@@ -35,32 +35,36 @@ fn darcy_friction(edge: &Edge, re: f64) -> f64 {
     if re > right_boundary {
         turbulent(re)
     } else if re < left_boundary {
-        laminar
+        laminar(re)
     } else {
-        let right_boundary_value = turbulent(right_boundary);
         let dre = 1e-3;
+
+        let left_boundary_value = laminar(left_boundary);
+        let left_boundary_slope = (laminar(left_boundary + dre) - left_boundary_value) / dre;
+
+        let right_boundary_value = turbulent(right_boundary);
         let right_boundary_slope = (turbulent(right_boundary + dre) - right_boundary_value) / dre;
 
         transition_cubic(
             re,
             left_boundary,
             right_boundary,
-            laminar,
-            0.,
+            left_boundary_value,
+            left_boundary_slope,
             right_boundary_value,
             right_boundary_slope,
         )
     }
 }
 
-fn lambda_mat(network: &Network, e: DVector<f64>, v: DVector<f64>) -> DMatrix<f64> {
+fn lambda(network: &Network, e: DVector<f64>, v: DVector<f64>) -> DMatrix<f64> {
     let lambda = DVector::from_iterator(
         network.num_edges(),
         network.edges().enumerate().map(|(i, edge)| {
             let v = v[i];
             let e = (e[edge.src] + e[edge.tgt]) / 2.;
 
-            lambda(edge, e, v)
+            darcey_friction(edge, reynold(edge, e, v))
         }),
     );
 
@@ -370,7 +374,7 @@ mod tests {
                 length: 1.,
                 diameter: 0.2,
                 transmittance: 1.,
-                roughness: 1e-3,
+                roughness: 1e-2,
                 zeta: 1.,
             },
         };

@@ -26,8 +26,6 @@ pub fn transition_cubic(
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Error;
-    use approx::assert_relative_eq;
     use std::fs;
     use std::io::Write;
 
