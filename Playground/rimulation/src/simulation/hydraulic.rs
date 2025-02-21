@@ -1,7 +1,20 @@
 use anyhow::{anyhow, Error};
 use nalgebra::{stack, DMatrix, DVector};
 
-use crate::types::network::Network;
+use crate::{
+    types::network::{Edge, Network},
+    water,
+};
+
+fn reynold(edge: &Edge, v: f64, e: f64) -> f64 {
+    v * edge.parameters.length / water::viscousity(e)
+}
+
+fn lambda(network: &Network, v: DVector<f64>, e: DVector<f64>) -> DMatrix<f64> {
+    let lambda = todo!();
+
+    todo!()
+}
 
 fn ar(network: &Network) -> DMatrix<f64> {
     DMatrix::from_iterator(

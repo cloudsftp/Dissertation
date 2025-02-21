@@ -1,5 +1,7 @@
 use anyhow::{anyhow, Error};
 
+use crate::polynome::poly;
+
 const T2: f64 = 59.2453;
 const T2_2: f64 = 2. * T2;
 const T2_4: f64 = 4. * T2;
@@ -9,7 +11,7 @@ const T0: f64 = 1.93729;
 
 /// Computes the temperature T [°C] based on the energy density e [GJ/m^3]
 pub fn temperature(e: f64) -> f64 {
-    (T2 * e + T1) * e + T0
+    poly(e, &[T0, T1, T2])
 }
 
 /// Computes the energy density e [GJ/m^3] based on the temperature T [°C]
@@ -32,6 +34,7 @@ const NU2: f64 = 17.6559;
 const NU1: f64 = -7.00355;
 const NU0: f64 = 1.42624;
 
+/// Computes the kinematic viscousity nu [m^2/s] based on the energy density [GJ/m^3]
 pub fn viscousity(e: f64) -> f64 {
-    (((NU4 * e + NU3) * e + NU2) * e + NU1) * e + NU0
+    poly(e, &[NU0, NU1, NU2, NU3, NU4])
 }
