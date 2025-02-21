@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Error};
 
-use crate::polynome::poly;
+use crate::{polynome::poly, transition::transition_cubic};
 
 const T2: f64 = 59.2453;
 const T2_2: f64 = 2. * T2;

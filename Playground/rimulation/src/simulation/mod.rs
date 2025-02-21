@@ -1,7 +1,8 @@
 mod hydraulic;
+mod matrices;
 
 use anyhow::Error;
-use hydraulic::Matrices;
+use matrices::Matrices;
 use nalgebra::DVector;
 
 use crate::{
@@ -26,6 +27,8 @@ fn initial_energy_densities(network: &Network, settings: &Settings) -> Result<Ve
 
 pub fn simulate(network: Network, settings: Settings) -> Result<(), Error> {
     dbg!(&network);
+
+    let matrices = Matrices::try_from(&network)?;
 
     let e = DVector::from_vec(initial_energy_densities(&network, &settings)?);
 
