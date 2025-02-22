@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use nalgebra::{stack, DMatrix, DVector};
 
 use crate::{
@@ -9,10 +9,6 @@ use crate::{
 
 fn reynold(edge: &Edge, e: f64, v: f64) -> f64 {
     v.abs() * edge.parameters.length / water::viscosity(e)
-}
-
-fn lambda(edge: &Edge, e: f64, v: f64) -> f64 {
-    darcy_friction(edge, reynold(edge, e, v))
 }
 
 fn darcy_friction(edge: &Edge, re: f64) -> f64 {
@@ -64,7 +60,7 @@ fn lambda(network: &Network, e: DVector<f64>, v: DVector<f64>) -> DMatrix<f64> {
             let v = v[i];
             let e = (e[edge.src] + e[edge.tgt]) / 2.;
 
-            darcey_friction(edge, reynold(edge, e, v))
+            darcy_friction(edge, reynold(edge, e, v))
         }),
     );
 
@@ -132,20 +128,22 @@ fn at(network: &Network) -> DMatrix<f64> {
     )
 }
 
+#[derive(Debug, thiserror::Error)]
+enum MatrixError {
+    #[error("Index out of bounds when setting matrix element: ({i}, {j})")]
+    IndexOutOfBounds { i: usize, j: usize },
+    #[error("Missing predecessor for node {0}")]
+    MissingPredecessor(usize),
+    #[error("Missing edge between nodes {0} and {1}")]
+    MissingEdge(usize, usize),
+}
+
 fn ac(network: &Network) -> Result<DMatrix<f64>, Error> {
     let mut ac = DMatrix::from_element(network.num_cycles(), network.num_nodes(), 0.);
     let mut set_matrix_element = |i, j, v| {
-        let index = j * network.num_cycles() + i;
-        if index < network.num_cycles() * network.num_nodes() {
-            ac[index] = v;
-            Ok(())
-        } else {
-            Err(anyhow!(
-                "index out of range when setting matrix element {}, {}",
-                i,
-                j,
-            ))
-        }
+        (i < ac.nrows() && j < ac.ncols())
+            .then(|| ac[(i, j)] = v)
+            .ok_or(MatrixError::IndexOutOfBounds { i, j })
     };
 
     for (i, cycle_edge) in network.cycle_edges.iter().enumerate() {
@@ -158,16 +156,12 @@ fn ac(network: &Network) -> Result<DMatrix<f64>, Error> {
                 let p = network
                     .pred_nodes
                     .get(c)
-                    .ok_or(anyhow!("could not find predecessor of node {}", c))?;
+                    .ok_or(MatrixError::MissingPredecessor(*c))?;
 
                 let (j, reversed) = network
                     .edge_indices_by_connected_nodes
                     .get(&(*p, *c))
-                    .ok_or(anyhow!(
-                        "could not get the index of the edge connecting the nodes {} and {}",
-                        c,
-                        p,
-                    ))?;
+                    .ok_or(MatrixError::MissingEdge(*p, *c))?;
 
                 set_matrix_element(i, *j, if *reversed != invert { -1. } else { 1. })?;
 
@@ -191,10 +185,18 @@ fn dinv(network: &Network) -> DMatrix<f64> {
     ))
 }
 
+/// Stores the matrices used in hydraulic and thermal network calculations
 pub struct Matrices {
+    /// Incidence matrix for the entire network
     pub ai: DMatrix<f64>,
+    /// Reduced incidence matrix for demand nodes
     pub ar: DMatrix<f64>,
+    /// Reduced incidence matrix for pressure nodes
+    pub arp: DMatrix<f64>,
+    /// Identity matrix of all demand nodes
+    /// concatenated with 0s to have as much columns as the network has edges
     pub at: DMatrix<f64>,
+    /// Cycle incidence matrix (includes information about orientation)
     pub ac: DMatrix<f64>,
 }
 
@@ -208,7 +210,13 @@ impl TryFrom<&Network> for Matrices {
         let at = at(network);
         let ac = ac(network)?;
 
-        Ok(Self { ai, ar, at, ac })
+        Ok(Self {
+            ai,
+            ar,
+            arp,
+            at,
+            ac,
+        })
     }
 }
 
