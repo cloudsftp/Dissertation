@@ -11,6 +11,14 @@ fn reynold(edge: &Edge, e: f64, v: f64) -> f64 {
     v.abs() * edge.parameters.length / water::viscosity(e)
 }
 
+// Reynolds number transition boundaries for laminar to turbulent flow
+const DARCY_LEFT_BOUNDARY: f64 = 2_000.;
+const DARCY_RIGHT_BOUNDARY: f64 = 4_000.;
+
+/// Calculates the Darcy friction factor using:
+/// - Laminar flow (Re < 2000): f = 64/Re
+/// - Turbulent flow (Re > 4000): Serghide's solution
+/// - Transition (2000 <= Re <= 4000): Cubic interpolation
 fn darcy_friction(edge: &Edge, re: f64) -> f64 {
     let laminar = |re| 64. / re;
 
@@ -25,26 +33,24 @@ fn darcy_friction(edge: &Edge, re: f64) -> f64 {
         1. / (a - ((b - a).powi(2) / (c - 2. * b + a))).powi(2)
     };
 
-    let left_boundary = 2_000.;
-    let right_boundary = 4_000.;
-
-    if re > right_boundary {
+    if re > DARCY_RIGHT_BOUNDARY {
         turbulent(re)
-    } else if re < left_boundary {
+    } else if re < DARCY_LEFT_BOUNDARY {
         laminar(re)
     } else {
         let dre = 1e-3;
 
-        let left_boundary_value = laminar(left_boundary);
-        let left_boundary_slope = (laminar(left_boundary + dre) - left_boundary_value) / dre;
+        let left_boundary_value = laminar(DARCY_LEFT_BOUNDARY);
+        let left_boundary_slope = (laminar(DARCY_LEFT_BOUNDARY + dre) - left_boundary_value) / dre;
 
-        let right_boundary_value = turbulent(right_boundary);
-        let right_boundary_slope = (turbulent(right_boundary + dre) - right_boundary_value) / dre;
+        let right_boundary_value = turbulent(DARCY_RIGHT_BOUNDARY);
+        let right_boundary_slope =
+            (turbulent(DARCY_RIGHT_BOUNDARY + dre) - right_boundary_value) / dre;
 
         transition_cubic(
             re,
-            left_boundary,
-            right_boundary,
+            DARCY_LEFT_BOUNDARY,
+            DARCY_RIGHT_BOUNDARY,
             left_boundary_value,
             left_boundary_slope,
             right_boundary_value,
