@@ -25,21 +25,11 @@ impl NamedComponent for Node {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct PipeParameters {
-    pub length: f64,
-    pub diameter: f64,
-    pub transmittance: f64,
-    pub roughness: f64,
-    pub zeta: f64,
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Pipe {
     pub name: String,
     pub src: String,
     pub tgt: String,
-    pub parameters: PipeParameters,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -171,10 +161,17 @@ pub struct Scenario {
     pub source_inputs: HashMap<String, String>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Parameters {
+    pub parameters: Vec<PipeParameters>,
+    pub pipes: HashMap<String, String>,
+}
+
 #[derive(Debug)]
 pub struct Network {
     pub topology: Topology,
     pub scenario: Scenario,
+    pub parameters: Parameters,
 }
 
 pub fn load(path: &str) -> Result<Network, Error> {
@@ -188,7 +185,16 @@ pub fn load(path: &str) -> Result<Network, Error> {
     let scenario: Scenario =
         from_reader(scenario_file).map_err(|err| anyhow!("could not decode scenario: {}", err))?;
 
-    Ok(Network { topology, scenario })
+    let parameters_file = fs::File::open(format!("{}/parameters.json", path))
+        .map_err(|err| anyhow!("could not open parameters file: {}", err))?;
+    let parameters: Parameters = from_reader(parameters_file)
+        .map_err(|err| anyhow!("could not decode parameters: {}", err))?;
+
+    Ok(Network {
+        topology,
+        scenario,
+        parameters,
+    })
 }
 
 #[cfg(test)]
@@ -208,6 +214,13 @@ pub mod test {
     fn no_error_parsing_custom_format_scenario() {
         let file = fs::File::open("data/custom_format/scenario.json").expect("could not open file");
         let _: Scenario = from_reader(file).expect("could not parse scenario json");
+    }
+
+    #[test]
+    fn no_error_parsing_custom_format_parameters() {
+        let file =
+            fs::File::open("data/custom_format/parameters.json").expect("could not open file");
+        let _: Parameters = from_reader(file).expect("could not parse scenario json");
     }
 }
 

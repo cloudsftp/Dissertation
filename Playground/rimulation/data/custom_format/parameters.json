@@ -1,0 +1,15 @@
+{
+    "parameters": {
+        "default_pipe": {
+            "length": 44.7,
+            "diameter": 25.0,
+            "transmittance": 2.0,
+            "roughness": 0.05,
+            "zeta": 0.3
+        }
+    },
+    "pipes": {
+        "PF1": "default_pipe",
+        "PF2": "default_pipe"
+    }
+}

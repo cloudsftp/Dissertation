@@ -41,26 +41,12 @@
         {
             "name": "PF1",
             "src": "F001",
-            "tgt": "F002",
-            "parameters": {
-                "length": 44.7,
-                "diameter": 25.0,
-                "transmittance": 2.0,
-                "roughness": 0.05,
-                "zeta": 0.3
-            }
+            "tgt": "F002"
         },
         {
             "name": "PF2",
             "src": "R002",
-            "tgt": "R001",
-            "parameters": {
-                "length": 44.7,
-                "diameter": 25.0,
-                "transmittance": 2.0,
-                "roughness": 0.05,
-                "zeta": 0.3
-            }
+            "tgt": "R001"
         }
     ],
     "consumers": [
