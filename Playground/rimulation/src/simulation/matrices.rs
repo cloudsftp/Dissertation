@@ -232,9 +232,10 @@ mod tests {
 
     use super::*;
 
+    use crate::types::formats::custom::PipeParameters;
     use crate::types::network::{
         test::{DUMMY_CONST_SIGNAL, DUMMY_PIPE_PARAMETERS},
-        Edge, Node, PipeParameters,
+        Edge, Node,
     };
 
     fn create_test_net() -> Network {

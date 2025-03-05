@@ -71,88 +71,104 @@
                 "z": 0
             },
             "feed": false
-    }
+        }
     ],
     "pipes": [
         {
             "name": "PF1",
-            "length": 44.7,
-            "diameter": 25.0,
-            "transmittance": 2.0,
-            "roughness": 0.05,
-            "zeta": 0.3,
             "src": "F001",
-            "tgt": "F002"
+            "tgt": "F002",
+            "parameters": {
+                "length": 44.7,
+                "diameter": 25.0,
+                "transmittance": 2.0,
+                "roughness": 0.05,
+                "zeta": 0.3
+            }
         },
         {
             "name": "PF2",
-            "length": 44.7,
-            "diameter": 25.0,
-            "transmittance": 2.0,
-            "roughness": 0.05,
-            "zeta": 0.3,
             "src": "F002",
-            "tgt": "F003"
+            "tgt": "F003",
+            "parameters": {
+                "length": 44.7,
+                "diameter": 25.0,
+                "transmittance": 2.0,
+                "roughness": 0.05,
+                "zeta": 0.3
+            }
         },
         {
             "name": "PF3",
-            "length": 44.7,
-            "diameter": 25.0,
-            "transmittance": 2.0,
-            "roughness": 0.05,
-            "zeta": 0.3,
             "src": "F003",
-            "tgt": "F004"
+            "tgt": "F004",
+            "parameters": {
+                "length": 44.7,
+                "diameter": 25.0,
+                "transmittance": 2.0,
+                "roughness": 0.05,
+                "zeta": 0.3
+            }
         },
         {
             "name": "PF4",
-            "length": 44.7,
-            "diameter": 25.0,
-            "transmittance": 2.0,
-            "roughness": 0.05,
-            "zeta": 0.3,
             "src": "F002",
-            "tgt": "F004"
+            "tgt": "F004",
+            "parameters": {
+                "length": 44.7,
+                "diameter": 25.0,
+                "transmittance": 2.0,
+                "roughness": 0.05,
+                "zeta": 0.3
+            }
         },
         {
             "name": "PR1",
-            "length": 44.7,
-            "diameter": 25.0,
-            "transmittance": 2.0,
-            "roughness": 0.05,
-            "zeta": 0.3,
             "src": "R002",
-            "tgt": "R001"
+            "tgt": "R001",
+            "parameters": {
+                "length": 44.7,
+                "diameter": 25.0,
+                "transmittance": 2.0,
+                "roughness": 0.05,
+                "zeta": 0.3
+            }
         },
         {
             "name": "PR2",
-            "length": 44.7,
-            "diameter": 25.0,
-            "transmittance": 2.0,
-            "roughness": 0.05,
-            "zeta": 0.3,
             "src": "R003",
-            "tgt": "R002"
+            "tgt": "R002",
+            "parameters": {
+                "length": 44.7,
+                "diameter": 25.0,
+                "transmittance": 2.0,
+                "roughness": 0.05,
+                "zeta": 0.3
+            }
         },
         {
             "name": "PR3",
-            "length": 44.7,
-            "diameter": 25.0,
-            "transmittance": 2.0,
-            "roughness": 0.05,
-            "zeta": 0.3,
             "src": "R004",
-            "tgt": "R003"
+            "tgt": "R003",
+            "parameters": {
+                "length": 44.7,
+                "diameter": 25.0,
+                "transmittance": 2.0,
+                "roughness": 0.05,
+                "zeta": 0.3
+            }
         },
         {
             "name": "PR4",
-            "length": 44.7,
-            "diameter": 25.0,
-            "transmittance": 2.0,
-            "roughness": 0.05,
-            "zeta": 0.3,
             "src": "R004",
-            "tgt": "R002"
+            "tgt": "R002",
+            "parameters": {
+                "length": 44.7,
+                "diameter": 25.0,
+                "transmittance": 2.0,
+                "roughness": 0.05,
+                "zeta": 0.3
+            }
         }
     ],
     "consumers": [

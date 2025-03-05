@@ -48,11 +48,13 @@ fn create_test_topology(
         .enumerate()
         .map(|(i, (src, tgt))| Pipe {
             name: format!("P{}", i),
-            length: 1.,
-            diameter: 2.,
-            transmittance: 3.,
-            roughness: 4.,
-            zeta: 5.,
+            parameters: PipeParameters {
+                length: 1.,
+                diameter: 2.,
+                transmittance: 3.,
+                roughness: 4.,
+                zeta: 5.,
+            },
             src: format!("N{}", src),
             tgt: format!("N{}", tgt),
         })

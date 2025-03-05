@@ -25,16 +25,21 @@ impl NamedComponent for Node {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Pipe {
-    pub name: String,
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct PipeParameters {
     pub length: f64,
     pub diameter: f64,
     pub transmittance: f64,
     pub roughness: f64,
     pub zeta: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Pipe {
+    pub name: String,
     pub src: String,
     pub tgt: String,
+    pub parameters: PipeParameters,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

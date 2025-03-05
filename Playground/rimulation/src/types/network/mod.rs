@@ -2,7 +2,7 @@
 pub mod test;
 
 use super::formats::{
-    custom::{self, Input, Pipe},
+    custom::{self, Input, PipeParameters},
     NamedComponent,
 };
 use super::signal::Signal;
@@ -38,27 +38,6 @@ impl NamedComponent for Node {
             } => name.clone(),
             Node::Demand { name, demand: _ } => name.clone(),
             Node::Zero { name } => name.clone(),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct PipeParameters {
-    pub length: f64,
-    pub diameter: f64,
-    pub transmittance: f64,
-    pub roughness: f64,
-    pub zeta: f64,
-}
-
-impl From<&Pipe> for PipeParameters {
-    fn from(value: &Pipe) -> Self {
-        Self {
-            length: value.length,
-            diameter: value.diameter,
-            transmittance: value.transmittance,
-            roughness: value.roughness,
-            zeta: value.zeta,
         }
     }
 }
@@ -429,7 +408,7 @@ fn extract_edges(value: &custom::Network, nodes: &[Node]) -> Result<Vec<Edge>, E
             let src = *get_node_index(&pipe.src)?;
             let tgt = *get_node_index(&pipe.tgt)?;
 
-            let parameters = PipeParameters::from(pipe);
+            let parameters = pipe.parameters.clone();
 
             Ok(Edge {
                 src,
