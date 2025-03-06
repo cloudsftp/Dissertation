@@ -98,18 +98,18 @@ pub struct DataPoint {
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
 pub enum Signal {
-    Const {
-        scale: f64,
-        data: f64,
-    },
+    #[serde(rename = "const")]
+    Const { scale: f64, data: f64 },
+    #[serde(rename = "poly")]
     Poly {
         // TODO: make lookup cheaper (hashmap of interpolated times?)
         degree: usize,
         scale: f64,
         data: Vec<DataPoint>,
     },
+    #[serde(rename = "step")]
+    Step { low: f64, high: f64, time: f64 },
 }
 
 impl Signal {
@@ -133,6 +133,11 @@ impl Signal {
                         v: v * factor,
                     })
                     .collect(),
+            },
+            Signal::Step { low, high, time } => Signal::Step {
+                low: low * factor,
+                high: high * factor,
+                time: *time,
             },
         }
     }

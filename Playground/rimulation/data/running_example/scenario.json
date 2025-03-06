@@ -12,60 +12,70 @@
     },
     "signals": {
         "C1_demand": {
-            "degree": 1,
-            "scale": 1,
-            "data": [
-                {
-                    "t": 0,
-                    "v": 0.4
-                },
-                {
-                    "t": 5,
-                    "v": 0.6
-                },
-                {
-                    "t": 10,
-                    "v": 0.8
-                },
-                {
-                    "t": 15,
-                    "v": 0.7
-                }
-            ]
+            "poly": {
+                "degree": 1,
+                "scale": 1,
+                "data": [
+                    {
+                        "t": 0,
+                        "v": 0.4
+                    },
+                    {
+                        "t": 5,
+                        "v": 0.6
+                    },
+                    {
+                        "t": 10,
+                        "v": 0.8
+                    },
+                    {
+                        "t": 15,
+                        "v": 0.7
+                    }
+                ]
+            }
         },
         "C1_return_temperature": {
-            "scale": 1,
-            "data": 1
+            "const": {
+                "scale": 1,
+                "data": 1
+            }
         },
         "S1_base_pressure": {
-            "scale": 100000,
-            "data": 5
+            "const": {
+                "scale": 100000,
+                "data": 5
+            }
         },
         "S1_pressure_lift": {
-            "scale": 100000,
-            "data": 4.5
+            "const": {
+                "scale": 100000,
+                "data": 4.5
+            }
         },
         "S1_temperature": {
-            "degree": 3,
-            "scale": 1,
-            "data": [
-                {
-                    "t": 0,
-                    "v": 120
-                },
-                {
-                    "t": 5,
-                    "v": 110
-                },
-                {
-                    "t": 10,
-                    "v": 105
-                },
-                {
-                    "t": 15,
-                    "v": 110
-                }
-            ]
+            "poly": {
+                "degree": 3,
+                "scale": 1,
+                "data": [
+                    {
+                        "t": 0,
+                        "v": 120
+                    },
+                    {
+                        "t": 5,
+                        "v": 110
+                    },
+                    {
+                        "t": 10,
+                        "v": 105
+                    },
+                    {
+                        "t": 15,
+                        "v": 110
+                    }
+                ]
+            }
         }
     },
     "inputs": {

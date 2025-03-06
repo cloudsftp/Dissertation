@@ -1,0 +1,41 @@
+{
+    "nodes": [
+        {
+            "name": "F001",
+            "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            }
+        },
+        {
+            "name": "F002",
+            "position": {
+                "x": 10,
+                "y": 0,
+                "z": 0
+            }
+        }
+    ],
+    "pipes": [
+        {
+            "name": "PF1",
+            "src": "F001",
+            "tgt": "F002"
+        }
+    ],
+    "consumers": [
+        {
+            "name": "C1",
+            "src": "F002",
+            "tgt": "R002"
+        }
+    ],
+    "sources": [
+        {
+            "name": "S1",
+            "src": "R001",
+            "tgt": "F001"
+        }
+    ]
+}

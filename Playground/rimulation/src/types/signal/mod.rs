@@ -26,6 +26,11 @@ pub enum Signal {
         y: Vec<f64>,
         m: Vec<f64>,
     },
+    Step {
+        low: f64,
+        high: f64,
+        time: f64,
+    },
 }
 
 impl TryFrom<custom::Signal> for Signal {
@@ -70,6 +75,7 @@ impl TryFrom<custom::Signal> for Signal {
                     _ => unreachable!("all other degrees are not allowed"),
                 }
             }
+            custom::Signal::Step { low, high, time } => Ok(Signal::Step { low, high, time }),
         }
     }
 }
@@ -166,6 +172,13 @@ impl Signal {
                     + (6. * y[i - 1] - m[i - 1] * h * h) * dx_r
                     + (6. * y[i] - m[i] * h * h) * dx_l)
                     / (6. * h)
+            }
+            Signal::Step { low, high, time } => {
+                if x < *time {
+                    *low
+                } else {
+                    *high
+                }
             }
         })
     }

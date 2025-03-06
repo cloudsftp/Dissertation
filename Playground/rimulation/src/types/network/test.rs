@@ -339,7 +339,7 @@ fn from_feed() {
         .to_vec();
 
     let edge_parameters: Vec<EmptyPipeParameters> =
-        edges.iter().map(|_| DUMMY_PIPE_PARAMETERS).collect();
+        (0..edges.len()).map(|_| DUMMY_PIPE_PARAMETERS).collect();
 
     let network = Network::try_from_feed(nodes, edges, edge_parameters.clone())
         .expect("could not compute the network");
