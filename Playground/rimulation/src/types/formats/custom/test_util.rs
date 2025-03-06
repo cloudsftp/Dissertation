@@ -61,20 +61,20 @@ fn create_test_topology(
     let consumers = consumers
         .iter()
         .enumerate()
-        .map(|(i, j)| Consumer {
-            name: format!("C{}", i),
-            src: format!("N{}", j),
-            tgt: format!("N{}", j + num_feed_nodes),
+        .map(|(src, tgt)| Consumer {
+            name: format!("C{}", src),
+            src: format!("N{}", tgt),
+            tgt: format!("N{}", tgt + num_feed_nodes),
         })
         .collect();
 
     let sources = sources
         .iter()
         .enumerate()
-        .map(|(i, j)| Source {
-            name: format!("S{}", i),
-            src: format!("N{}", j + num_feed_nodes),
-            tgt: format!("N{}", j),
+        .map(|(src, tgt)| Source {
+            name: format!("S{}", src),
+            src: format!("N{}", tgt + num_feed_nodes),
+            tgt: format!("N{}", tgt),
         })
         .collect();
 

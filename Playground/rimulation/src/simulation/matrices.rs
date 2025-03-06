@@ -269,9 +269,9 @@ mod tests {
             )
             .collect();
         let edges = [(0, 4), (0, 1), (1, 2), (3, 2), (3, 4)]
-            .map(|(i, j)| Edge {
-                src: i,
-                tgt: j,
+            .map(|(src, tgt)| Edge {
+                src,
+                tgt,
                 // parameters: DUMMY_PIPE_PARAMETERS,
             })
             .to_vec();
@@ -290,7 +290,7 @@ mod tests {
             })
             .collect();
         let edges = [(1, 0), (1, 2), (2, 3), (4, 3), (4, 0)]
-            .map(|(i, j)| Edge { src: i, tgt: j })
+            .map(|(src, tgt)| Edge { src, tgt })
             .to_vec();
 
         let edge_parameters = (0..edges.len()).map(|_| DUMMY_PIPE_PARAMETERS).collect();
@@ -362,7 +362,7 @@ mod tests {
             })
             .collect();
         let edges = [(1, 0), (1, 2), (2, 3), (1, 3), (3, 0), (1, 2)]
-            .map(|(i, j)| Edge { src: i, tgt: j })
+            .map(|(src, tgt)| Edge { src, tgt })
             .to_vec();
 
         let edge_parameters = (0..edges.len()).map(|_| DUMMY_PIPE_PARAMETERS).collect();

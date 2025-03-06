@@ -65,9 +65,9 @@ fn from_custom_network() {
     let num_feed_nodes = 10;
     let mut edges = Vec::with_capacity(20);
 
-    for (i, j) in feed_edges {
-        edges.push((i, j));
-        edges.push((i + num_feed_nodes, j + num_feed_nodes));
+    for (src, tgt) in feed_edges {
+        edges.push((src, tgt));
+        edges.push((src + num_feed_nodes, tgt + num_feed_nodes));
     }
 
     let custom_network =
@@ -127,7 +127,7 @@ fn from_custom_network() {
             (2, 5), // cycle edges
             (3, 4),
         ]
-        .map(|(i, j)| Edge { src: i, tgt: j })
+        .map(|(src, tgt)| Edge { src, tgt })
         .into_iter()
         .collect::<Vec<_>>()
     );
@@ -182,7 +182,7 @@ fn extract_edges_of_custom_net() {
 
     assert_eq!(
         edges,
-        edge_tuples.map(|(i, j)| Edge { src: i, tgt: j }).to_vec()
+        edge_tuples.map(|(src, tgt)| Edge { src, tgt }).to_vec()
     )
 }
 
@@ -341,7 +341,7 @@ fn from_feed() {
     let nodes = [pressure_nodes.clone(), demand_nodes.clone()].concat();
 
     let edges = [(0, 1), (0, 2), (1, 3), (1, 4), (4, 2)]
-        .map(|(i, j)| Edge { src: i, tgt: j })
+        .map(|(src, tgt)| Edge { src, tgt })
         .to_vec();
 
     let edge_parameters: Vec<FullPipeParameters> =
@@ -359,7 +359,7 @@ fn from_feed() {
             pressure_nodes,
             root_node_index: 4,
             spanning_tree_edges: expected_spanning_tree_edges
-                .map(|(i, j)| Edge { src: i, tgt: j })
+                .map(|(src, tgt)| Edge { src, tgt })
                 .to_vec(),
             cycle_edges: vec![Edge { src: 3, tgt: 1 }],
             pred_nodes: [(0, 4), (1, 4), (2, 0), (3, 0)].into_iter().collect(),
@@ -529,7 +529,7 @@ fn reordering_demand_nodes() {
     assert_eq!(
         edges,
         [(0, 4), (4, 1), (1, 2), (2, 3), (3, 5), (5, 0),]
-            .map(|(i, j)| Edge { src: i, tgt: j })
+            .map(|(src, tgt)| Edge { src, tgt })
             .into_iter()
             .collect::<Vec<_>>()
     );
