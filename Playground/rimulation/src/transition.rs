@@ -81,7 +81,7 @@ mod tests {
             let fx = transition_cubic(x, left, right, p_0, m_0, p_1, m_1);
             let fdx = transition_cubic(x + dx, left, right, p_0, m_0, p_1, m_1);
 
-            let slope = ((fdx - fx) / dx);
+            let slope = (fdx - fx) / dx;
             let difference = (slope - expected).abs();
             assert!(
                 difference < dx.abs(),

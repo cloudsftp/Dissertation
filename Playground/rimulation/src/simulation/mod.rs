@@ -13,7 +13,10 @@ use crate::{
     water,
 };
 
-fn initial_energy_densities(network: &Network, settings: &Settings) -> Result<Vec<f64>, Error> {
+fn initial_energy_densities<T>(
+    network: &Network<T>,
+    settings: &Settings,
+) -> Result<Vec<f64>, Error> {
     network
         .nodes()
         .map(|node| -> Result<f64, anyhow::Error> {
@@ -25,7 +28,13 @@ fn initial_energy_densities(network: &Network, settings: &Settings) -> Result<Ve
         .collect()
 }
 
-pub fn simulate(network: Network, settings: Settings) -> Result<(), Error> {
+pub fn simulate<PipeParameters>(
+    network: Network<PipeParameters>,
+    settings: Settings,
+) -> Result<(), Error>
+where
+    PipeParameters: std::fmt::Debug,
+{
     dbg!(&network);
 
     let matrices = Matrices::try_from(&network)?;

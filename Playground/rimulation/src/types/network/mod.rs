@@ -42,11 +42,72 @@ impl NamedComponent for Node {
     }
 }
 
+pub trait HydraulicPipeParameters {
+    fn length(&self) -> f64;
+    fn diameter(&self) -> f64;
+    fn transmittance(&self) -> f64;
+    fn roughness(&self) -> f64;
+    fn zeta(&self) -> f64;
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct FullPipeParameters {
+    pub length: f64,
+    pub diameter: f64,
+    pub transmittance: f64,
+    pub roughness: f64,
+    pub zeta: f64,
+}
+
+impl TryFrom<PipeParameters> for FullPipeParameters {
+    type Error = Error;
+
+    fn try_from(value: PipeParameters) -> Result<Self, Self::Error> {
+        match value {
+            PipeParameters::Full {
+                length,
+                diameter,
+                transmittance,
+                roughness,
+                zeta,
+            } => Ok(Self {
+                length,
+                diameter,
+                transmittance,
+                roughness,
+                zeta,
+            }),
+            _ => Err(anyhow!("wrong enum type: {:?} expected Full", value)),
+        }
+    }
+}
+
+impl HydraulicPipeParameters for FullPipeParameters {
+    fn length(&self) -> f64 {
+        self.length
+    }
+
+    fn diameter(&self) -> f64 {
+        self.diameter
+    }
+
+    fn transmittance(&self) -> f64 {
+        self.transmittance
+    }
+
+    fn roughness(&self) -> f64 {
+        self.roughness
+    }
+
+    fn zeta(&self) -> f64 {
+        self.zeta
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Edge {
     pub src: usize,
     pub tgt: usize,
-    pub parameters: PipeParameters,
 }
 
 impl Edge {
@@ -62,7 +123,7 @@ impl Edge {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Network {
+pub struct Network<T> {
     pub demand_nodes: Vec<Node>,
     pub pressure_nodes: Vec<Node>,
     pub root_node_index: usize,
@@ -71,16 +132,26 @@ pub struct Network {
     pub pred_nodes: HashMap<usize, usize>,
     pub edge_indices_by_connected_nodes: HashMap<(usize, usize), (usize, bool)>,
     // Future: pressure_edges
+    pub edge_parameters: Vec<T>,
 }
 
-impl Network {
-    pub fn try_from_feed(nodes: Vec<Node>, edges: Vec<Edge>) -> Result<Self, Error> {
+impl<EdgeParameters> Network<EdgeParameters> {
+    pub fn try_from_feed(
+        nodes: Vec<Node>,
+        edges: Vec<Edge>,
+        edge_parameters: Vec<EdgeParameters>,
+    ) -> Result<Self, Error>
+    where
+        EdgeParameters: Clone,
+    {
         let (demand_nodes, pressure_nodes, edges) = split_nodes(nodes, edges);
 
-        let (root_node_index, spanning_tree_edges, cycle_edges, pred_nodes) = split_edges(
-            [demand_nodes.clone(), pressure_nodes.clone()].concat(),
-            edges,
-        )?;
+        let (root_node_index, spanning_tree_edges, cycle_edges, pred_nodes, edge_parameters) =
+            split_edges(
+                [demand_nodes.clone(), pressure_nodes.clone()].concat(),
+                edges,
+                edge_parameters,
+            )?;
 
         let edge_indices_by_connected_nodes: HashMap<(usize, usize), (usize, bool)> =
             spanning_tree_edges
@@ -104,6 +175,7 @@ impl Network {
             cycle_edges,
             pred_nodes,
             edge_indices_by_connected_nodes,
+            edge_parameters,
         })
     }
 
@@ -115,6 +187,10 @@ impl Network {
         self.spanning_tree_edges
             .iter()
             .chain(self.cycle_edges.iter())
+    }
+
+    pub fn edge_parameters(&self) -> impl Iterator<Item = &EdgeParameters> {
+        self.edge_parameters.iter()
     }
 
     pub fn get_node(&self, i: usize) -> Result<&Node, Error> {
@@ -162,12 +238,15 @@ impl Network {
     }
 }
 
-impl TryFrom<custom::Network> for Network {
+impl<EdgeParameters> TryFrom<custom::Network> for Network<EdgeParameters>
+where
+    EdgeParameters: TryFrom<PipeParameters, Error = Error> + Clone,
+{
     type Error = Error;
 
     fn try_from(value: custom::Network) -> Result<Self, Self::Error> {
         let nodes = extract_nodes(&value)?;
-        let edges = extract_edges(&value, &nodes)?;
+        let (edges, edge_parameters) = extract_edges(&value, &nodes)?;
 
         let num_sources = nodes
             .iter()
@@ -182,7 +261,7 @@ impl TryFrom<custom::Network> for Network {
         }
 
         let (nodes, edges) = extract_feed(nodes, edges)?;
-        Network::try_from_feed(nodes, edges)
+        Network::try_from_feed(nodes, edges, edge_parameters)
     }
 }
 
@@ -200,7 +279,7 @@ fn split_nodes(nodes: Vec<Node>, edges: Vec<Edge>) -> (Vec<Node>, Vec<Node>, Vec
     let mut index_mapping: HashMap<usize, usize> = HashMap::new();
     let mut j = 0usize;
 
-    let mut insert_node = |(i, node): &(usize, &Node)| {
+    let mut insert_node = |(i, _): &(usize, &Node)| {
         index_mapping.insert(*i, j);
         j += 1;
     };
@@ -223,50 +302,77 @@ fn split_nodes(nodes: Vec<Node>, edges: Vec<Edge>) -> (Vec<Node>, Vec<Node>, Vec
 
     let edges: Vec<Edge> = edges
         .into_iter()
-        .map(
-            |Edge {
-                 src,
-                 tgt,
-                 parameters,
-             }| {
-                Edge {
-                    src: index_mapping[&src],
-                    tgt: index_mapping[&tgt],
-                    parameters,
-                }
-            },
-        )
+        .map(|Edge { src, tgt }| Edge {
+            src: index_mapping[&src],
+            tgt: index_mapping[&tgt],
+        })
         .collect();
 
     (demand_nodes, pressure_nodes, edges)
 }
 
-fn split_edges(
+fn split_edges<EdgeParameters>(
     nodes: Vec<Node>,
     edges: Vec<Edge>,
-) -> Result<(usize, Vec<Edge>, Vec<Edge>, HashMap<usize, usize>), Error> {
+    edge_parameters: Vec<EdgeParameters>,
+) -> Result<
+    (
+        usize,
+        Vec<Edge>,
+        Vec<Edge>,
+        HashMap<usize, usize>,
+        Vec<EdgeParameters>,
+    ),
+    Error,
+>
+where
+    EdgeParameters: Clone,
+{
     let (root_node_index, spanning_tree_edge_indices, cycle_edge_indices, pred_nodes) =
         find_spanning_tree(&nodes, &edges)?;
 
-    let spanning_tree_edges = edges
+    let mut edge_parameter_mapping: HashMap<usize, usize> = HashMap::new();
+
+    let spanning_tree_edges: Vec<_> = edges
         .iter()
         .enumerate()
         .filter(move |(i, _)| spanning_tree_edge_indices.contains(i))
-        .map(|(_, edge)| edge.clone())
+        .enumerate()
+        .map(|(new_index, (old_index, edge))| {
+            edge_parameter_mapping.insert(new_index, old_index);
+
+            edge.clone()
+        })
         .collect();
 
     let cycle_edges = edges
         .iter()
         .enumerate()
         .filter(move |(i, _)| cycle_edge_indices.contains(i))
-        .map(|(_, edge)| edge.clone())
+        .enumerate()
+        .map(|(new_index, (old_index, edge))| {
+            edge_parameter_mapping.insert(new_index + spanning_tree_edges.len(), old_index);
+
+            edge.clone()
+        })
         .collect();
+
+    let reordered_edge_parameters = (0..edge_parameters.len())
+        .map(|new_index| -> Result<EdgeParameters, Error> {
+            let old_index = edge_parameter_mapping
+                .get(&new_index)
+                .ok_or(anyhow!("edge parameter mapping not complete"))?;
+
+            Ok(edge_parameters[*old_index].clone())
+        })
+        .collect::<Result<Vec<_>, Error>>()?;
 
     Ok((
         root_node_index,
         spanning_tree_edges,
         cycle_edges,
         pred_nodes,
+        reordered_edge_parameters,
     ))
 }
 
@@ -387,7 +493,13 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
         .collect()
 }
 
-fn extract_edges(value: &custom::Network, nodes: &[Node]) -> Result<Vec<Edge>, Error> {
+fn extract_edges<EdgeParameters>(
+    value: &custom::Network,
+    nodes: &[Node],
+) -> Result<(Vec<Edge>, Vec<EdgeParameters>), Error>
+where
+    EdgeParameters: TryFrom<PipeParameters, Error = Error>,
+{
     let node_indices: HashMap<String, usize> = nodes
         .iter()
         .enumerate()
@@ -400,6 +512,15 @@ fn extract_edges(value: &custom::Network, nodes: &[Node]) -> Result<Vec<Edge>, E
             .ok_or(anyhow!("node '{}' does not exist", node_name))
     };
 
+    let get_parameters = |name: &str| -> Result<EdgeParameters, Error> {
+        let parsed = value
+            .parameters
+            .parameters
+            .get(name)
+            .ok_or(anyhow!("could not get parameters with the name {}", name))?;
+        parsed.clone().try_into()
+    };
+
     value
         .topology
         .pipes
@@ -408,13 +529,9 @@ fn extract_edges(value: &custom::Network, nodes: &[Node]) -> Result<Vec<Edge>, E
             let src = *get_node_index(&pipe.src)?;
             let tgt = *get_node_index(&pipe.tgt)?;
 
-            let parameters = pipe.parameters.clone();
+            let parameters = get_parameters(&pipe.name)?;
 
-            Ok(Edge {
-                src,
-                tgt,
-                parameters,
-            })
+            Ok((Edge { src, tgt }, parameters))
         })
         .collect()
 }
@@ -512,26 +629,12 @@ fn filter_network(
         .into_iter()
         .enumerate()
         .filter(|(i, _)| edges_to_keep.contains(i))
-        .map(
-            |(
-                _,
-                Edge {
-                    src,
-                    tgt,
-                    parameters,
-                },
-            )|
-             -> Result<Edge, Error> {
-                let src = get_new_node_index(src)?;
-                let tgt = get_new_node_index(tgt)?;
+        .map(|(_, Edge { src, tgt })| -> Result<Edge, Error> {
+            let src = get_new_node_index(src)?;
+            let tgt = get_new_node_index(tgt)?;
 
-                Ok(Edge {
-                    src,
-                    tgt,
-                    parameters,
-                })
-            },
-        )
+            Ok(Edge { src, tgt })
+        })
         .collect::<Result<Vec<Edge>, Error>>()?;
 
     Ok((nodes, edges))

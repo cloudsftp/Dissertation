@@ -6,7 +6,15 @@ use super::super::formats::custom::test_util::{DUMMY_CONST_CUSTOM_SIGNAL, DUMMY_
 
 pub const DUMMY_CONST_SIGNAL: Signal = Signal::Const { value: 1. };
 
-pub const DUMMY_PIPE_PARAMETERS: PipeParameters = PipeParameters {
+pub const DUMMY_PIPE_PARAMETERS: FullPipeParameters = FullPipeParameters {
+    length: 1.,
+    diameter: 2.,
+    transmittance: 3.,
+    roughness: 4.,
+    zeta: 5.,
+};
+
+pub const DUMMY_PARSED_PIPE_PARAMETERS: PipeParameters = PipeParameters::Full {
     length: 1.,
     diameter: 2.,
     transmittance: 3.,
@@ -31,11 +39,7 @@ fn create_test_nodes_and_edges(
     let edges = edges
         .iter()
         .cloned()
-        .map(|(src, tgt)| Edge {
-            src,
-            tgt,
-            parameters: DUMMY_PIPE_PARAMETERS,
-        })
+        .map(|(src, tgt)| Edge { src, tgt })
         .collect();
 
     (nodes, edges)
@@ -66,7 +70,7 @@ fn from_custom_network() {
     let custom_network =
         custom::test_util::create_test_net(20, num_feed_nodes, &edges, &[5, 6], &[0]);
 
-    let network: Network = custom_network
+    let network: Network<FullPipeParameters> = custom_network
         .try_into()
         .expect("could not convert custom network into internal network type");
 
@@ -120,11 +124,7 @@ fn from_custom_network() {
             (2, 5), // cycle edges
             (3, 4),
         ]
-        .map(|(i, j)| Edge {
-            src: i,
-            tgt: j,
-            parameters: DUMMY_PIPE_PARAMETERS
-        })
+        .map(|(i, j)| Edge { src: i, tgt: j })
         .into_iter()
         .collect::<Vec<_>>()
     );
@@ -174,18 +174,12 @@ fn extract_edges_of_custom_net() {
     let custom_net = custom::test_util::create_test_net(10, 5, &edge_tuples, &[3, 4], &[0]);
 
     let nodes = extract_nodes(&custom_net).expect("could not extract nodes from custom net");
-    let edges =
-        extract_edges(&custom_net, &nodes).expect("could not extract edges from cutsom net");
+    let (edges, _) = extract_edges::<FullPipeParameters>(&custom_net, &nodes)
+        .expect("could not extract edges from cutsom net");
 
     assert_eq!(
         edges,
-        edge_tuples
-            .map(|(i, j)| Edge {
-                src: i,
-                tgt: j,
-                parameters: DUMMY_PIPE_PARAMETERS
-            })
-            .to_vec()
+        edge_tuples.map(|(i, j)| Edge { src: i, tgt: j }).to_vec()
     )
 }
 
@@ -271,11 +265,7 @@ fn assert_filter_network(
         expected_edges
             .iter()
             .cloned()
-            .map(|(i, j)| Edge {
-                src: i,
-                tgt: j,
-                parameters: DUMMY_PIPE_PARAMETERS
-            })
+            .map(|(src, tgt)| Edge { src, tgt })
             .collect::<Vec<_>>(),
         "filtered nodes not as expected in test case '{}'",
         name
@@ -347,14 +337,13 @@ fn from_feed() {
     let nodes = [pressure_nodes.clone(), demand_nodes.clone()].concat();
 
     let edges = [(0, 1), (0, 2), (1, 3), (1, 4), (4, 2)]
-        .map(|(i, j)| Edge {
-            src: i,
-            tgt: j,
-            parameters: DUMMY_PIPE_PARAMETERS,
-        })
+        .map(|(i, j)| Edge { src: i, tgt: j })
         .to_vec();
 
-    let network = Network::try_from_feed(nodes, edges).expect("could not compute the network");
+    let edge_parameters: Vec<FullPipeParameters> = todo!();
+
+    let network = Network::try_from_feed(nodes, edges, edge_parameters)
+        .expect("could not compute the network");
 
     let expected_spanning_tree_edges = [(4, 0), (4, 1), (0, 2), (0, 3)];
 
@@ -365,17 +354,9 @@ fn from_feed() {
             pressure_nodes,
             root_node_index: 4,
             spanning_tree_edges: expected_spanning_tree_edges
-                .map(|(i, j)| Edge {
-                    src: i,
-                    tgt: j,
-                    parameters: DUMMY_PIPE_PARAMETERS,
-                })
+                .map(|(i, j)| Edge { src: i, tgt: j })
                 .to_vec(),
-            cycle_edges: vec![Edge {
-                src: 3,
-                tgt: 1,
-                parameters: DUMMY_PIPE_PARAMETERS
-            }],
+            cycle_edges: vec![Edge { src: 3, tgt: 1 }],
             pred_nodes: [(0, 4), (1, 4), (2, 0), (3, 0)].into_iter().collect(),
             edge_indices_by_connected_nodes: expected_spanning_tree_edges
                 .iter()
@@ -386,6 +367,7 @@ fn from_feed() {
                 )
                 .flatten()
                 .collect(),
+            edge_parameters: todo!()
         }
     );
 }
@@ -500,11 +482,7 @@ fn reordering_demand_nodes() {
 
     let edges: Vec<Edge> = edges
         .into_iter()
-        .map(|(src, tgt)| Edge {
-            src,
-            tgt,
-            parameters: DUMMY_PIPE_PARAMETERS,
-        })
+        .map(|(src, tgt)| Edge { src, tgt })
         .collect();
 
     let (demand_nodes, pressure_nodes, edges) = split_nodes(nodes, edges);
@@ -546,11 +524,7 @@ fn reordering_demand_nodes() {
     assert_eq!(
         edges,
         [(0, 4), (4, 1), (1, 2), (2, 3), (3, 5), (5, 0),]
-            .map(|(i, j)| Edge {
-                src: i,
-                tgt: j,
-                parameters: DUMMY_PIPE_PARAMETERS
-            })
+            .map(|(i, j)| Edge { src: i, tgt: j })
             .into_iter()
             .collect::<Vec<_>>()
     );

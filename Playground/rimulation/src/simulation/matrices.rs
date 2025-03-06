@@ -3,12 +3,12 @@ use nalgebra::{stack, DMatrix, DVector};
 
 use crate::{
     transition::transition_cubic,
-    types::network::{Edge, Network},
+    types::network::{HydraulicPipeParameters, Network},
     water,
 };
 
-fn reynold(edge: &Edge, e: f64, v: f64) -> f64 {
-    v.abs() * edge.parameters.length / water::viscosity(e)
+fn reynold(edge: &impl HydraulicPipeParameters, e: f64, v: f64) -> f64 {
+    v.abs() * edge.length() / water::viscosity(e)
 }
 
 // Reynolds number transition boundaries for laminar to turbulent flow
@@ -19,12 +19,12 @@ const DARCY_RIGHT_BOUNDARY: f64 = 4_000.;
 /// - Laminar flow (Re < 2000): f = 64/Re
 /// - Turbulent flow (Re > 4000): Serghide's solution
 /// - Transition (2000 <= Re <= 4000): Cubic interpolation
-fn darcy_friction(edge: &Edge, re: f64) -> f64 {
+fn darcy_friction(edge: &impl HydraulicPipeParameters, re: f64) -> f64 {
     let laminar = |re| 64. / re;
 
     // serghides's solution
     let turbulent = |re: f64| {
-        let summand = edge.parameters.roughness / (3.7 * edge.parameters.diameter);
+        let summand = edge.roughness() / (3.7 * edge.diameter());
 
         let a = -(summand + 12. / re).log2();
         let b = -(summand + 2.51 * a / re).log2();
@@ -59,21 +59,32 @@ fn darcy_friction(edge: &Edge, re: f64) -> f64 {
     }
 }
 
-fn lambda(network: &Network, e: DVector<f64>, v: DVector<f64>) -> DMatrix<f64> {
+fn lambda<PipeParameters>(
+    network: &Network<PipeParameters>,
+    e: DVector<f64>,
+    v: DVector<f64>,
+) -> DMatrix<f64>
+where
+    PipeParameters: HydraulicPipeParameters,
+{
     let lambda = DVector::from_iterator(
         network.num_edges(),
-        network.edges().enumerate().map(|(i, edge)| {
-            let v = v[i];
-            let e = (e[edge.src] + e[edge.tgt]) / 2.;
+        network
+            .edges()
+            .zip(network.edge_parameters())
+            .enumerate()
+            .map(|(i, (edge, edge_parameters))| {
+                let v = v[i];
+                let e = (e[edge.src] + e[edge.tgt]) / 2.;
 
-            darcy_friction(edge, reynold(edge, e, v))
-        }),
+                darcy_friction(edge_parameters, reynold(edge_parameters, e, v))
+            }),
     );
 
     DMatrix::from_diagonal(&lambda)
 }
 
-fn ar(network: &Network) -> DMatrix<f64> {
+fn ar<PipeParameters>(network: &Network<PipeParameters>) -> DMatrix<f64> {
     DMatrix::from_iterator(
         network.num_edges(),
         network.demand_nodes.len(),
@@ -93,7 +104,7 @@ fn ar(network: &Network) -> DMatrix<f64> {
     )
 }
 
-fn arp(network: &Network) -> DMatrix<f64> {
+fn arp<PipeParameters>(network: &Network<PipeParameters>) -> DMatrix<f64> {
     let num_pressure_nodes = network.pressure_nodes.len();
     let num_demand_nodes = network.demand_nodes.len();
 
@@ -117,14 +128,14 @@ fn arp(network: &Network) -> DMatrix<f64> {
     )
 }
 
-fn ai(network: &Network) -> DMatrix<f64> {
+fn ai<PipeParameters>(network: &Network<PipeParameters>) -> DMatrix<f64> {
     let ar = ar(network);
     let arp = arp(network);
 
     stack![ar, arp]
 }
 
-fn at(network: &Network) -> DMatrix<f64> {
+fn at<PipeParameters>(network: &Network<PipeParameters>) -> DMatrix<f64> {
     DMatrix::from_iterator(
         network.demand_nodes.len(),
         network.num_edges(),
@@ -144,7 +155,7 @@ enum MatrixError {
     MissingEdge(usize, usize),
 }
 
-fn ac(network: &Network) -> Result<DMatrix<f64>, Error> {
+fn ac<PipeParameters>(network: &Network<PipeParameters>) -> Result<DMatrix<f64>, Error> {
     let mut ac = DMatrix::from_element(network.num_cycles(), network.num_nodes(), 0.);
     let mut set_matrix_element = |i, j, v| {
         (i < ac.nrows() && j < ac.ncols())
@@ -184,10 +195,15 @@ fn ac(network: &Network) -> Result<DMatrix<f64>, Error> {
     Ok(ac)
 }
 
-fn dinv(network: &Network) -> DMatrix<f64> {
+fn dinv<PipeParameters>(network: &Network<PipeParameters>) -> DMatrix<f64>
+where
+    PipeParameters: HydraulicPipeParameters,
+{
     DMatrix::from_diagonal(&DVector::from_iterator(
         network.num_edges(),
-        network.edges().map(|edge| 1. / edge.parameters.diameter),
+        network
+            .edge_parameters()
+            .map(|edge_parameters| 1. / edge_parameters.diameter()),
     ))
 }
 
@@ -206,10 +222,10 @@ pub struct Matrices {
     pub ac: DMatrix<f64>,
 }
 
-impl TryFrom<&Network> for Matrices {
+impl<T> TryFrom<&Network<T>> for Matrices {
     type Error = Error;
 
-    fn try_from(network: &Network) -> Result<Self, Self::Error> {
+    fn try_from(network: &Network<T>) -> Result<Self, Self::Error> {
         let ar = ar(network);
         let arp = arp(network);
         let ai = ai(network);
@@ -232,13 +248,13 @@ mod tests {
 
     use super::*;
 
-    use crate::types::formats::custom::PipeParameters;
+    use crate::types::network::FullPipeParameters;
     use crate::types::network::{
         test::{DUMMY_CONST_SIGNAL, DUMMY_PIPE_PARAMETERS},
         Edge, Node,
     };
 
-    fn create_test_net() -> Network {
+    fn create_test_net() -> Network<FullPipeParameters> {
         let nodes = (0..4)
             .map(|i| Node::Zero {
                 name: format!("N{}", i),
@@ -256,11 +272,13 @@ mod tests {
             .map(|(i, j)| Edge {
                 src: i,
                 tgt: j,
-                parameters: DUMMY_PIPE_PARAMETERS,
+                // parameters: DUMMY_PIPE_PARAMETERS,
             })
             .to_vec();
 
-        Network::try_from_feed(nodes, edges)
+        let edge_parameters = (0..edges.len()).map(|_| DUMMY_PIPE_PARAMETERS).collect();
+
+        Network::try_from_feed(nodes, edges, edge_parameters)
             .expect("could not compute network from feed nodes and edges")
     }
 
@@ -272,14 +290,12 @@ mod tests {
             })
             .collect();
         let edges = [(1, 0), (1, 2), (2, 3), (4, 3), (4, 0)]
-            .map(|(i, j)| Edge {
-                src: i,
-                tgt: j,
-                parameters: DUMMY_PIPE_PARAMETERS,
-            })
+            .map(|(i, j)| Edge { src: i, tgt: j })
             .to_vec();
 
-        let network = Network::try_from_feed(nodes, edges)
+        let edge_parameters = (0..edges.len()).map(|_| DUMMY_PIPE_PARAMETERS).collect();
+
+        let network = Network::try_from_feed(nodes, edges, edge_parameters)
             .expect("could not compute network from feed nodes and edges");
 
         let ac = ac(&network).expect("could not compute A_C matrix");
@@ -346,14 +362,12 @@ mod tests {
             })
             .collect();
         let edges = [(1, 0), (1, 2), (2, 3), (1, 3), (3, 0), (1, 2)]
-            .map(|(i, j)| Edge {
-                src: i,
-                tgt: j,
-                parameters: DUMMY_PIPE_PARAMETERS,
-            })
+            .map(|(i, j)| Edge { src: i, tgt: j })
             .to_vec();
 
-        let network = Network::try_from_feed(nodes, edges)
+        let edge_parameters = (0..edges.len()).map(|_| DUMMY_PIPE_PARAMETERS).collect();
+
+        let network = Network::try_from_feed(nodes, edges, edge_parameters)
             .expect("could not compute network from feed nodes and edges");
 
         let at = at(&network);
@@ -382,21 +396,17 @@ mod tests {
         let l = 1_000.;
         let r = 10_000.;
 
-        let edge = &Edge {
-            src: 0,
-            tgt: 1,
-            parameters: PipeParameters {
-                length: 1.,
-                diameter: 0.2,
-                transmittance: 1.,
-                roughness: 1e-2,
-                zeta: 1.,
-            },
+        let edge_parameters = &FullPipeParameters {
+            length: 1.,
+            diameter: 0.2,
+            transmittance: 1.,
+            roughness: 1e-2,
+            zeta: 1.,
         };
 
         for i in 0..n {
             let re = l + i as f64 * (r - l) / n as f64;
-            let lambda = darcy_friction(edge, re);
+            let lambda = darcy_friction(edge_parameters, re);
 
             file.write(format!("{} {}\n", re, lambda).as_bytes())
                 .expect("could not write to file");

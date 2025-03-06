@@ -1,3 +1,8 @@
+use crate::types::network::{
+    test::{DUMMY_PARSED_PIPE_PARAMETERS, DUMMY_PIPE_PARAMETERS},
+    FullPipeParameters,
+};
+
 use super::*;
 
 pub const DUMMY_CUSTOM_POSITION: Position = Position {
@@ -48,13 +53,6 @@ fn create_test_topology(
         .enumerate()
         .map(|(i, (src, tgt))| Pipe {
             name: format!("P{}", i),
-            parameters: PipeParameters {
-                length: 1.,
-                diameter: 2.,
-                transmittance: 3.,
-                roughness: 4.,
-                zeta: 5.,
-            },
             src: format!("N{}", src),
             tgt: format!("N{}", tgt),
         })
@@ -136,6 +134,22 @@ fn create_test_scenario(num_consumers: usize, num_sources: usize) -> Scenario {
     }
 }
 
+fn create_test_parameters(pipes: &[Pipe]) -> Parameters {
+    Parameters {
+        parameters: [(
+            String::from("dummy_pipe_parameters"),
+            DUMMY_PARSED_PIPE_PARAMETERS,
+        )]
+        .iter()
+        .cloned()
+        .collect(),
+        pipes: pipes
+            .iter()
+            .map(|pipe| (pipe.name.clone(), String::from("dummy_pipe_parameters")))
+            .collect(),
+    }
+}
+
 pub fn create_test_net(
     num_nodes: usize,
     num_feed_nodes: usize,
@@ -145,6 +159,11 @@ pub fn create_test_net(
 ) -> Network {
     let topology = create_test_topology(num_nodes, num_feed_nodes, edges, consumers, sources);
     let scenario = create_test_scenario(consumers.len(), sources.len());
+    let parameters = create_test_parameters(&topology.pipes);
 
-    Network { topology, scenario }
+    Network {
+        topology,
+        scenario,
+        parameters,
+    }
 }

@@ -58,6 +58,18 @@ impl NamedComponent for Source {
     }
 }
 
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PipeParameters {
+    Full {
+        length: f64,
+        diameter: f64,
+        transmittance: f64,
+        roughness: f64,
+        zeta: f64,
+    },
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Topology {
     pub nodes: Vec<Node>,
@@ -163,7 +175,7 @@ pub struct Scenario {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Parameters {
-    pub parameters: Vec<PipeParameters>,
+    pub parameters: HashMap<String, PipeParameters>,
     pub pipes: HashMap<String, String>,
 }
 
