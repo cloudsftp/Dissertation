@@ -30,19 +30,22 @@ fn set_of<T: Clone + Eq + Hash>(values: &[T]) -> HashSet<T> {
 fn create_test_nodes_and_edges(
     num_nodes: usize,
     edges: &[(usize, usize)],
-) -> (Vec<Node>, Vec<Edge>) {
+) -> (Vec<Node>, Vec<Edge>, Vec<FullPipeParameters>) {
     let nodes = (0..num_nodes)
         .map(|i| Node::Zero {
             name: format!("N{}", i),
         })
         .collect();
-    let edges = edges
+
+    let edges: Vec<_> = edges
         .iter()
         .cloned()
         .map(|(src, tgt)| Edge { src, tgt })
         .collect();
 
-    (nodes, edges)
+    let edge_parameters = edges.iter().map(|_| DUMMY_PIPE_PARAMETERS).collect();
+
+    (nodes, edges, edge_parameters)
 }
 
 #[test]
@@ -191,7 +194,7 @@ fn assert_find_feed(
     expected_nodes: &[usize],
     expected_edges: &[usize],
 ) {
-    let (nodes, edges) = create_test_nodes_and_edges(num_nodes, edges);
+    let (nodes, edges, _) = create_test_nodes_and_edges(num_nodes, edges);
 
     let (nodes, edges) =
         find_feed(&nodes, &edges, start_node).expect("could not find feed of network");
@@ -241,13 +244,14 @@ fn assert_filter_network(
     expected_nodes: &[usize],
     expected_edges: &[(usize, usize)],
 ) {
-    let (nodes, edges) = create_test_nodes_and_edges(num_nodes, edges);
+    let (nodes, edges, edge_parameters) = create_test_nodes_and_edges(num_nodes, edges);
 
     let nodes_to_keep = nodes_to_keep.into_iter().cloned().collect();
     let edges_to_keep = edges_to_keep.into_iter().cloned().collect();
 
-    let (filtered_nodes, filtered_edges) =
-        filter_network(nodes, edges, nodes_to_keep, edges_to_keep).expect("filtering did not work");
+    let (filtered_nodes, filtered_edges, _) =
+        filter_network(nodes, edges, edge_parameters, nodes_to_keep, edges_to_keep)
+            .expect("filtering did not work");
 
     assert_eq!(
         filtered_nodes,
@@ -340,9 +344,10 @@ fn from_feed() {
         .map(|(i, j)| Edge { src: i, tgt: j })
         .to_vec();
 
-    let edge_parameters: Vec<FullPipeParameters> = todo!();
+    let edge_parameters: Vec<FullPipeParameters> =
+        edges.iter().map(|_| DUMMY_PIPE_PARAMETERS).collect();
 
-    let network = Network::try_from_feed(nodes, edges, edge_parameters)
+    let network = Network::try_from_feed(nodes, edges, edge_parameters.clone())
         .expect("could not compute the network");
 
     let expected_spanning_tree_edges = [(4, 0), (4, 1), (0, 2), (0, 3)];
@@ -367,7 +372,7 @@ fn from_feed() {
                 )
                 .flatten()
                 .collect(),
-            edge_parameters: todo!()
+            edge_parameters,
         }
     );
 }
@@ -379,7 +384,7 @@ fn assert_find_spanning_tree(
     expected_spanning_tree: &[usize],
     expected_pred_nodes: &[(usize, usize)],
 ) {
-    let (nodes, edges) = create_test_nodes_and_edges(num_nodes, edges);
+    let (nodes, edges, _) = create_test_nodes_and_edges(num_nodes, edges);
 
     let (root_node_index, spanning_tree, cycle_edges, pred_nodes) =
         find_spanning_tree(&nodes, &edges).expect("could not compute spanning tree");

@@ -260,7 +260,7 @@ where
             ));
         }
 
-        let (nodes, edges) = extract_feed(nodes, edges)?;
+        let (nodes, edges, edge_parameters) = extract_feed(nodes, edges, edge_parameters)?;
         Network::try_from_feed(nodes, edges, edge_parameters)
     }
 }
@@ -361,7 +361,7 @@ where
         .map(|new_index| -> Result<EdgeParameters, Error> {
             let old_index = edge_parameter_mapping
                 .get(&new_index)
-                .ok_or(anyhow!("edge parameter mapping not complete"))?;
+                .ok_or(anyhow!("edge parameter mapping not complete {}", new_index))?;
 
             Ok(edge_parameters[*old_index].clone())
         })
@@ -513,10 +513,16 @@ where
     };
 
     let get_parameters = |name: &str| -> Result<EdgeParameters, Error> {
+        let parameters_name = value
+            .parameters
+            .pipes
+            .get(name)
+            .ok_or(anyhow!("could not get parameters name for pipe {}", name))?;
+
         let parsed = value
             .parameters
             .parameters
-            .get(name)
+            .get(parameters_name)
             .ok_or(anyhow!("could not get parameters with the name {}", name))?;
         parsed.clone().try_into()
     };
@@ -604,12 +610,13 @@ fn find_feed(
     Ok((feed_nodes, feed_edges))
 }
 
-fn filter_network(
+fn filter_network<EdgeParameters>(
     nodes: Vec<Node>,
     edges: Vec<Edge>,
+    edge_parameters: Vec<EdgeParameters>,
     nodes_to_keep: HashSet<usize>,
     edges_to_keep: HashSet<usize>,
-) -> Result<(Vec<Node>, Vec<Edge>), Error> {
+) -> Result<(Vec<Node>, Vec<Edge>, Vec<EdgeParameters>), Error> {
     let (nodes, node_index_mapping): (Vec<Node>, HashMap<usize, usize>) = nodes
         .into_iter()
         .enumerate()
@@ -637,10 +644,20 @@ fn filter_network(
         })
         .collect::<Result<Vec<Edge>, Error>>()?;
 
-    Ok((nodes, edges))
+    let edge_parameters = edge_parameters
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, edge_parameters)| edges_to_keep.contains(&i).then(|| edge_parameters))
+        .collect();
+
+    Ok((nodes, edges, edge_parameters))
 }
 
-fn extract_feed(nodes: Vec<Node>, edges: Vec<Edge>) -> Result<(Vec<Node>, Vec<Edge>), Error> {
+fn extract_feed<EdgeParameters>(
+    nodes: Vec<Node>,
+    edges: Vec<Edge>,
+    edge_parameters: Vec<EdgeParameters>,
+) -> Result<(Vec<Node>, Vec<Edge>, Vec<EdgeParameters>), Error> {
     let start_node = nodes
         .iter()
         .enumerate()
@@ -652,7 +669,7 @@ fn extract_feed(nodes: Vec<Node>, edges: Vec<Edge>) -> Result<(Vec<Node>, Vec<Ed
 
     let (nodes_to_keep, edges_to_keep) = find_feed(&nodes, &edges, start_node)?;
 
-    filter_network(nodes, edges, nodes_to_keep, edges_to_keep)
+    filter_network(nodes, edges, edge_parameters, nodes_to_keep, edges_to_keep)
 }
 
 fn find_spanning_tree(
