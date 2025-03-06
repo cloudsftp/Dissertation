@@ -53,9 +53,9 @@ pub fn simulate(network: Network, settings: Settings) -> Result<(), Error> {
         .solve(&q)
         .expect("could not solve system of equations for m1");
 
-    dbg!(m1);
+    let v = hydraulic::get_velocities(q, e, &matrices);
 
-    let v = DVector::from_fn(network.num_nodes(), |i, _| todo!());
+    dbg!(v);
 
     todo!();
 }
