@@ -6,13 +6,7 @@ use super::super::formats::custom::test_util::{DUMMY_CONST_CUSTOM_SIGNAL, DUMMY_
 
 pub const DUMMY_CONST_SIGNAL: Signal = Signal::Const { value: 1. };
 
-pub const DUMMY_PIPE_PARAMETERS: FullPipeParameters = FullPipeParameters {
-    length: 1.,
-    diameter: 2.,
-    transmittance: 3.,
-    roughness: 4.,
-    zeta: 5.,
-};
+pub const DUMMY_PIPE_PARAMETERS: EmptyPipeParameters = EmptyPipeParameters {};
 
 pub const DUMMY_PARSED_PIPE_PARAMETERS: PipeParameters = PipeParameters::Full {
     length: 1.,
@@ -30,7 +24,7 @@ fn set_of<T: Clone + Eq + Hash>(values: &[T]) -> HashSet<T> {
 fn create_test_nodes_and_edges(
     num_nodes: usize,
     edges: &[(usize, usize)],
-) -> (Vec<Node>, Vec<Edge>, Vec<FullPipeParameters>) {
+) -> (Vec<Node>, Vec<Edge>, Vec<EmptyPipeParameters>) {
     let nodes = (0..num_nodes)
         .map(|i| Node::Zero {
             name: format!("N{}", i),
@@ -344,7 +338,7 @@ fn from_feed() {
         .map(|(src, tgt)| Edge { src, tgt })
         .to_vec();
 
-    let edge_parameters: Vec<FullPipeParameters> =
+    let edge_parameters: Vec<EmptyPipeParameters> =
         edges.iter().map(|_| DUMMY_PIPE_PARAMETERS).collect();
 
     let network = Network::try_from_feed(nodes, edges, edge_parameters.clone())

@@ -59,6 +59,9 @@ pub struct FullPipeParameters {
     pub zeta: f64,
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct EmptyPipeParameters {}
+
 impl TryFrom<PipeParameters> for FullPipeParameters {
     type Error = Error;
 

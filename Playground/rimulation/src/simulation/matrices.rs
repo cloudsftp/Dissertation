@@ -248,13 +248,13 @@ mod tests {
 
     use super::*;
 
-    use crate::types::network::FullPipeParameters;
     use crate::types::network::{
         test::{DUMMY_CONST_SIGNAL, DUMMY_PIPE_PARAMETERS},
         Edge, Node,
     };
+    use crate::types::network::{EmptyPipeParameters, FullPipeParameters};
 
-    fn create_test_net() -> Network<FullPipeParameters> {
+    fn create_test_net() -> Network<EmptyPipeParameters> {
         let nodes = (0..4)
             .map(|i| Node::Zero {
                 name: format!("N{}", i),
