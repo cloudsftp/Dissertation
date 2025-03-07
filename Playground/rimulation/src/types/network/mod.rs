@@ -51,6 +51,9 @@ pub trait HydraulicPipeParameters {
 }
 
 #[derive(Debug, PartialEq, Clone)]
+pub struct EmptyPipeParameters {}
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct FullPipeParameters {
     pub length: f64,
     pub diameter: f64,
@@ -58,9 +61,6 @@ pub struct FullPipeParameters {
     pub roughness: f64,
     pub zeta: f64,
 }
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct EmptyPipeParameters {}
 
 impl TryFrom<PipeParameters> for FullPipeParameters {
     type Error = Error;
@@ -85,6 +85,22 @@ impl TryFrom<PipeParameters> for FullPipeParameters {
     }
 }
 
+impl TryFrom<PipeParameters> for FixedVelocityPipeParameters {
+    type Error = Error;
+
+    fn try_from(value: PipeParameters) -> Result<Self, Self::Error> {
+        match value {
+            PipeParameters::FixedVelocity { length, velocity } => {
+                Ok(FixedVelocityPipeParameters { length, velocity })
+            }
+            _ => Err(anyhow!(
+                "wrong enum type: {:?} expected FixedVelocity",
+                value
+            )),
+        }
+    }
+}
+
 impl HydraulicPipeParameters for FullPipeParameters {
     fn length(&self) -> f64 {
         self.length
@@ -105,6 +121,12 @@ impl HydraulicPipeParameters for FullPipeParameters {
     fn zeta(&self) -> f64 {
         self.zeta
     }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct FixedVelocityPipeParameters {
+    pub length: f64,
+    pub velocity: f64,
 }
 
 #[derive(Debug, PartialEq, Clone)]

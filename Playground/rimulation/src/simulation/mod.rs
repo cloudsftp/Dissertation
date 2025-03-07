@@ -8,7 +8,7 @@ use nalgebra::DVector;
 use crate::{
     types::{
         formats::custom::Settings,
-        network::{Network, Node},
+        network::{Edge, FixedVelocityPipeParameters, Network, Node},
     },
     water,
 };
@@ -35,8 +35,6 @@ pub fn simulate<PipeParameters>(
 where
     PipeParameters: std::fmt::Debug,
 {
-    dbg!(&network);
-
     let matrices = Matrices::try_from(&network)?;
 
     let e = DVector::from_vec(initial_energy_densities(&network, &settings)?);
@@ -67,4 +65,44 @@ where
     dbg!(v);
 
     todo!();
+}
+
+pub fn simulate_delay(
+    network: Network<FixedVelocityPipeParameters>,
+    settings: Settings,
+) -> Result<(), Error> {
+    let mut e = DVector::from_vec(initial_energy_densities(&network, &settings)?);
+
+    let t = DVector::from_iterator(
+        network.num_edges(),
+        network
+            .edge_parameters()
+            .map(|FixedVelocityPipeParameters { length, velocity }| length / velocity),
+    );
+
+    let mut result = vec![e.clone()];
+
+    let num_steps = (settings.time_end * 24. * 60. / settings.time_step) as i32;
+    for i in 0..num_steps {
+        for (j, &Edge { src, tgt }) in network.edges().enumerate() {
+            let t = t[j] / settings.time_step;
+            e[tgt] = t * e[src] + (1. - t) * e[tgt];
+        }
+
+        for (j, node) in network.nodes().enumerate() {
+            match node {
+                Node::Pressure { temperature, .. } => {
+                    e[j] =
+                        water::energy_density(temperature.value_at(i as f64 * settings.time_step)?)?
+                }
+                _ => (),
+            }
+        }
+
+        result.push(e.clone())
+    }
+
+    dbg!(result);
+
+    Ok(())
 }

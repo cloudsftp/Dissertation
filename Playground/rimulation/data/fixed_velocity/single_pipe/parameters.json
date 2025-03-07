@@ -1,8 +1,8 @@
 {
     "parameters": {
         "v1": {
-            "v": 1,
-            "l": 2
+            "length": 2,
+            "velocity": 1
         }
     },
     "pipes": {

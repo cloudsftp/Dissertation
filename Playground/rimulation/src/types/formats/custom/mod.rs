@@ -68,6 +68,10 @@ pub enum PipeParameters {
         roughness: f64,
         zeta: f64,
     },
+    FixedVelocity {
+        length: f64,
+        velocity: f64,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]

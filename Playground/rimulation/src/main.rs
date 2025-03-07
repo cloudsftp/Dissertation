@@ -1,18 +1,18 @@
 use anyhow::Error;
 use rimulation::{
-    simulation::simulate,
+    simulation::{simulate, simulate_delay},
     types::{
         formats::custom::load,
-        network::{FullPipeParameters, Network},
+        network::{FixedVelocityPipeParameters, Network},
     },
 };
 
 fn main() -> Result<(), Error> {
-    let network = load("data/running_example")?;
+    let network = load("data/fixed_velocity/single_pipe")?;
     let settings = network.scenario.settings.clone();
-    let network: Network<FullPipeParameters> = network.try_into()?;
+    let network: Network<FixedVelocityPipeParameters> = network.try_into()?;
 
-    simulate(network, settings)?;
+    simulate_delay(network, settings)?;
 
     Ok(())
 }

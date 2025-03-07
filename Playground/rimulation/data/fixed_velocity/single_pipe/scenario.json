@@ -1,10 +1,10 @@
 {
     "settings": {
         "feed_temperature": 100,
-        "return_temperature": 65,
+        "return_temperature": 60,
         "ground_temperature": 10,
         "time_start": 0,
-        "time_end": 1,
+        "time_end": 0.03,
         "time_step": 5,
         "ramp_time": 8,
         "num_iterations": 100,
