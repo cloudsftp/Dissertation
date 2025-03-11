@@ -1,7 +1,9 @@
 mod hydraulic;
 mod matrices;
 
-use anyhow::Error;
+use std::collections::HashSet;
+
+use anyhow::{anyhow, Error};
 use matrices::Matrices;
 use nalgebra::DVector;
 
@@ -71,7 +73,7 @@ pub fn simulate_delay(
     network: Network<FixedVelocityPipeParameters>,
     settings: Settings,
 ) -> Result<(), Error> {
-    let t = DVector::from_iterator(
+    let dealys = DVector::from_iterator(
         network.num_edges(),
         network
             .edge_parameters()
@@ -86,12 +88,35 @@ pub fn simulate_delay(
         .map(|_| DVector::from_element(n, 0 as f64))
         .collect::<Vec<_>>();
 
-    let paths = network.paths;
-
     for (i, result) in result.iter_mut().enumerate() {
+        let path_delays: Vec<_> = network.paths[i]
+            .iter()
+            .map(|(source_index, path)| {
+                let mut delay = 0.;
+
+                for edge_index in path {
+                    delay += dealys[*edge_index];
+                }
+
+                (source_index, delay)
+            })
+            .collect();
+
         for t in 0..n {
-            let paths = &paths[i];
-            result[t] = todo!();
+            let mut value = 0.;
+
+            for (source_index, delay) in &path_delays {
+                let t = t as f64 * settings.time_step - delay;
+
+                let source = &network.pressure_nodes[*source_index - network.demand_nodes.len()];
+                if let Node::Pressure { temperature, .. } = source {
+                    value += temperature.value_at(t)?;
+                } else {
+                    return Err(anyhow!("not a source node"));
+                }
+            }
+
+            result[t] = value;
         }
     }
 
