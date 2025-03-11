@@ -158,6 +158,7 @@ pub struct Network<T> {
     pub edge_indices_by_connected_nodes: HashMap<(usize, usize), (usize, bool)>,
     // Future: pressure_edges
     pub edge_parameters: Vec<T>,
+    pub paths: Vec<HashSet<(usize, Vec<usize>)>>,
 }
 
 impl<EdgeParameters> Network<EdgeParameters> {
@@ -192,6 +193,12 @@ impl<EdgeParameters> Network<EdgeParameters> {
                 .flatten()
                 .collect();
 
+        let paths = compute_paths_to_sources(
+            demand_nodes.len(),
+            pressure_nodes.len(),
+            &[spanning_tree_edges.clone(), cycle_edges.clone()].concat(),
+        );
+
         Ok(Network {
             demand_nodes,
             pressure_nodes,
@@ -201,6 +208,7 @@ impl<EdgeParameters> Network<EdgeParameters> {
             pred_nodes,
             edge_indices_by_connected_nodes,
             edge_parameters,
+            paths,
         })
     }
 
@@ -567,9 +575,8 @@ where
         .collect()
 }
 
-fn get_adjacent_edges(nodes: &[Node], edges: &[Edge]) -> HashMap<usize, Vec<usize>> {
-    nodes
-        .iter()
+fn get_adjacent_edges(num_nodes: usize, edges: &[Edge]) -> HashMap<usize, Vec<usize>> {
+    (0..num_nodes)
         .enumerate()
         .map(|(node_idx, _)| {
             (
@@ -619,7 +626,7 @@ fn find_feed(
     edges: &[Edge],
     start_node: usize,
 ) -> Result<(HashSet<usize>, HashSet<usize>), Error> {
-    let adjacent_edges = get_adjacent_edges(nodes, edges);
+    let adjacent_edges = get_adjacent_edges(nodes.len(), edges);
 
     let mut feed_nodes = HashSet::new();
     let mut feed_edges = HashSet::new();
@@ -701,7 +708,7 @@ fn find_spanning_tree(
     nodes: &[Node],
     edges: &[Edge],
 ) -> Result<(usize, HashSet<usize>, HashSet<usize>, HashMap<usize, usize>), Error> {
-    let adjacent_edges = get_adjacent_edges(nodes, edges);
+    let adjacent_edges = get_adjacent_edges(nodes.len(), edges);
 
     let mut spanning_tree = HashSet::new();
     let mut cycle_edges = HashSet::new();
@@ -744,4 +751,55 @@ fn find_spanning_tree(
     }
 
     Ok((start_node, spanning_tree, cycle_edges, pred_nodes))
+}
+
+fn compute_paths_to_sources(
+    num_demand_nodes: usize,
+    num_pressure_nodes: usize,
+    edges: &[Edge],
+) -> Vec<HashSet<(usize, Vec<usize>)>> {
+    let adjacent_edges = get_adjacent_edges(num_demand_nodes + num_pressure_nodes, edges);
+
+    (0..num_demand_nodes + num_pressure_nodes)
+        .map(|i| {
+            if i >= num_demand_nodes {
+                return [(i, vec![])].iter().cloned().collect();
+            }
+
+            let mut paths = HashSet::new();
+
+            let mut work = VecDeque::new();
+
+            work.push_back((i, vec![], [i].iter().cloned().collect::<HashSet<_>>()));
+
+            while !work.is_empty() {
+                let (current_node, path, visited) = work.pop_front().expect("work queue is not empty per loop definition");
+
+                if let Some(edge_indices) = adjacent_edges.get(&current_node) {
+                    for edge_index in edge_indices {
+                        let edge = &edges[*edge_index];
+                        let next_node = edge.get_other_node(current_node).expect("edge has to connect to node since its index is from the adjacent edges map");
+
+                        if visited.contains(&next_node) {
+                            continue;
+                        }
+
+                        let mut path = path.clone();
+                        path.push(*edge_index);
+
+                        if next_node >= num_demand_nodes {
+                            paths.insert((next_node, path.clone()));
+                        }
+
+                        let mut visited = visited.clone();
+                        visited.insert(next_node);
+
+                        work.push_back((next_node, path, visited))
+                    }
+                }
+            }
+
+            paths
+        })
+        .collect()
 }

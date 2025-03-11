@@ -346,6 +346,14 @@ fn from_feed() {
 
     let expected_spanning_tree_edges = [(4, 0), (4, 1), (0, 2), (0, 3)];
 
+    let expected_paths = vec![
+        set_of(&[(4, vec![0]), (4, vec![3, 4, 1])]),
+        set_of(&[(4, vec![1]), (4, vec![4, 3, 0])]),
+        set_of(&[(4, vec![2, 0]), (4, vec![2, 3, 4, 1])]),
+        set_of(&[(4, vec![3, 0]), (4, vec![4, 1])]),
+        set_of(&[(4, vec![])]),
+    ];
+
     assert_eq!(
         network,
         Network {
@@ -367,6 +375,7 @@ fn from_feed() {
                 .flatten()
                 .collect(),
             edge_parameters,
+            paths: expected_paths,
         }
     );
 }
@@ -526,5 +535,48 @@ fn reordering_demand_nodes() {
             .map(|(src, tgt)| Edge { src, tgt })
             .into_iter()
             .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn compute_paths() {
+    let num_demand_nodes = 4;
+    let num_pressure_nodes = 2;
+
+    let spanning_tree_edges = vec![
+        Edge { src: 4, tgt: 0 },
+        Edge { src: 4, tgt: 2 },
+        Edge { src: 5, tgt: 0 }, // TODO: this is a pressure edge - as soon as multiple sources fully supported
+        Edge { src: 5, tgt: 3 },
+        Edge { src: 0, tgt: 1 },
+    ];
+    let cycle_edges = vec![Edge { src: 2, tgt: 1 }];
+
+    let paths = compute_paths_to_sources(
+        num_demand_nodes,
+        num_pressure_nodes,
+        &[spanning_tree_edges, cycle_edges].concat(),
+    );
+
+    assert_eq!(
+        paths,
+        vec![
+            set_of(&[(4, vec![0]), (4, vec![4, 5, 1]), (5, vec![2]),]),
+            set_of(&[
+                (4, vec![4, 0]),
+                (4, vec![5, 1]),
+                (5, vec![4, 2]),
+                (5, vec![5, 1, 0, 2])
+            ]),
+            set_of(&[
+                (4, vec![5, 4, 0]),
+                (4, vec![1]),
+                (5, vec![5, 4, 2]),
+                (5, vec![1, 0, 2])
+            ]),
+            set_of(&[(4, vec![3, 2, 0]), (4, vec![3, 2, 4, 5, 1]), (5, vec![3])]),
+            set_of(&[(4, vec![])]),
+            set_of(&[(5, vec![])]),
+        ]
     );
 }

@@ -71,8 +71,6 @@ pub fn simulate_delay(
     network: Network<FixedVelocityPipeParameters>,
     settings: Settings,
 ) -> Result<(), Error> {
-    let mut e = DVector::from_vec(initial_energy_densities(&network, &settings)?);
-
     let t = DVector::from_iterator(
         network.num_edges(),
         network
@@ -80,26 +78,21 @@ pub fn simulate_delay(
             .map(|FixedVelocityPipeParameters { length, velocity }| length / velocity),
     );
 
-    let mut result = vec![e.clone()];
+    let dt = settings.time_step * 60.;
+    let n =
+        ((settings.time_end - settings.time_start) * (24 * 60 * 60) as f64 / dt).ceil() as usize;
 
-    let num_steps = (settings.time_end * 24. * 60. / settings.time_step) as i32;
-    for i in 0..num_steps {
-        for (j, &Edge { src, tgt }) in network.edges().enumerate() {
-            let t = t[j] / settings.time_step;
-            e[tgt] = t * e[src] + (1. - t) * e[tgt];
+    let mut result = (0..network.num_nodes())
+        .map(|_| DVector::from_element(n, 0 as f64))
+        .collect::<Vec<_>>();
+
+    let paths = network.paths;
+
+    for (i, result) in result.iter_mut().enumerate() {
+        for t in 0..n {
+            let paths = &paths[i];
+            result[t] = todo!();
         }
-
-        for (j, node) in network.nodes().enumerate() {
-            match node {
-                Node::Pressure { temperature, .. } => {
-                    e[j] =
-                        water::energy_density(temperature.value_at(i as f64 * settings.time_step)?)?
-                }
-                _ => (),
-            }
-        }
-
-        result.push(e.clone())
     }
 
     dbg!(result);
