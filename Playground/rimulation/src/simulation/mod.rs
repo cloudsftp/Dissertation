@@ -91,10 +91,19 @@ pub fn simulate_delay(
     for (i, result) in result.iter_mut().enumerate() {
         let path_delays: Vec<_> = network.paths[i]
             .iter()
+            .filter(|(_, path)| {
+                path.iter().all(|(edge_index, correct_direction)| {
+                    if *correct_direction {
+                        network.edge_parameters[*edge_index].velocity > 0.
+                    } else {
+                        network.edge_parameters[*edge_index].velocity < 0.
+                    }
+                })
+            })
             .map(|(source_index, path)| {
                 let mut delay = 0.;
 
-                for edge_index in path {
+                for (edge_index, _) in path {
                     delay += dealys[*edge_index];
                 }
 

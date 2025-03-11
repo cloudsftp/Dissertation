@@ -347,10 +347,22 @@ fn from_feed() {
     let expected_spanning_tree_edges = [(4, 0), (4, 1), (0, 2), (0, 3)];
 
     let expected_paths = vec![
-        set_of(&[(4, vec![0]), (4, vec![3, 4, 1])]),
-        set_of(&[(4, vec![1]), (4, vec![4, 3, 0])]),
-        set_of(&[(4, vec![2, 0]), (4, vec![2, 3, 4, 1])]),
-        set_of(&[(4, vec![3, 0]), (4, vec![4, 1])]),
+        set_of(&[
+            (4, vec![(0, true)]),
+            (4, vec![(3, false), (4, false), (1, true)]),
+        ]),
+        set_of(&[
+            (4, vec![(1, true)]),
+            (4, vec![(4, true), (3, true), (0, true)]),
+        ]),
+        set_of(&[
+            (4, vec![(2, true), (0, true)]),
+            (4, vec![(2, true), (3, false), (4, false), (1, true)]),
+        ]),
+        set_of(&[
+            (4, vec![(3, true), (0, true)]),
+            (4, vec![(4, false), (1, true)]),
+        ]),
         set_of(&[(4, vec![])]),
     ];
 
@@ -561,20 +573,31 @@ fn compute_paths() {
     assert_eq!(
         paths,
         vec![
-            set_of(&[(4, vec![0]), (4, vec![4, 5, 1]), (5, vec![2]),]),
             set_of(&[
-                (4, vec![4, 0]),
-                (4, vec![5, 1]),
-                (5, vec![4, 2]),
-                (5, vec![5, 1, 0, 2])
+                (4, vec![(0, true)]),
+                (4, vec![(4, false), (5, true), (1, true)]),
+                (5, vec![(2, true)]),
             ]),
             set_of(&[
-                (4, vec![5, 4, 0]),
-                (4, vec![1]),
-                (5, vec![5, 4, 2]),
-                (5, vec![1, 0, 2])
+                (4, vec![(4, true), (0, true)]),
+                (4, vec![(5, true), (1, true)]),
+                (5, vec![(4, true), (2, true)]),
+                (5, vec![(5, true), (1, true), (0, false), (2, true)])
             ]),
-            set_of(&[(4, vec![3, 2, 0]), (4, vec![3, 2, 4, 5, 1]), (5, vec![3])]),
+            set_of(&[
+                (4, vec![(5, false), (4, true), (0, true)]),
+                (4, vec![(1, true)]),
+                (5, vec![(5, false), (4, true), (2, true)]),
+                (5, vec![(1, true), (0, false), (2, true)])
+            ]),
+            set_of(&[
+                (4, vec![(3, true), (2, false), (0, true)]),
+                (
+                    4,
+                    vec![(3, true), (2, false), (4, false), (5, true), (1, true)]
+                ),
+                (5, vec![(3, true)])
+            ]),
             set_of(&[(4, vec![])]),
             set_of(&[(5, vec![])]),
         ]

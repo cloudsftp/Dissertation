@@ -158,7 +158,7 @@ pub struct Network<T> {
     pub edge_indices_by_connected_nodes: HashMap<(usize, usize), (usize, bool)>,
     // Future: pressure_edges
     pub edge_parameters: Vec<T>,
-    pub paths: Vec<HashSet<(usize, Vec<usize>)>>,
+    pub paths: Vec<HashSet<(usize, Vec<(usize, bool)>)>>,
 }
 
 impl<EdgeParameters> Network<EdgeParameters> {
@@ -757,7 +757,7 @@ fn compute_paths_to_sources(
     num_demand_nodes: usize,
     num_pressure_nodes: usize,
     edges: &[Edge],
-) -> Vec<HashSet<(usize, Vec<usize>)>> {
+) -> Vec<HashSet<(usize, Vec<(usize, bool)>)>> {
     let adjacent_edges = get_adjacent_edges(num_demand_nodes + num_pressure_nodes, edges);
 
     (0..num_demand_nodes + num_pressure_nodes)
@@ -785,7 +785,8 @@ fn compute_paths_to_sources(
                         }
 
                         let mut path = path.clone();
-                        path.push(*edge_index);
+                        let direction_to_target = edge.src == next_node;
+                        path.push((*edge_index, direction_to_target));
 
                         if next_node >= num_demand_nodes {
                             paths.insert((next_node, path.clone()));
