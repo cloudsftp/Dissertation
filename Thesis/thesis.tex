@@ -5,29 +5,18 @@
 \include{commands/commands}
 \graphicspath{{figures/}}
 
-\usepackage[a4paper,width=150mm,top=25mm,bottom=25mm, bindingoffset=6mm]{geometry}
+\usepackage[
+  a4paper,
+  width=150mm,
+  top=25mm,
+  bottom=25mm,
+  bindingoffset=6mm,
+]{geometry}
 \usepackage{hyperref}
 
 \begin{document}
-	\pagenumbering{roman}
-	\include{frontmatter/titlepage}
-	\cleardoublepage
-	\addcontentsline{toc}{chapter}{Acknowledgments}
-	\include{frontmatter/acknwldg}
-	\cleardoublepage
-	\addcontentsline{toc}{chapter}{Abstract}
-	\include{frontmatter/abstract}
-	\cleardoublepage
-	\addcontentsline{toc}{chapter}{Zusammenfassung}
-	\include{frontmatter/zusammenfassung}
-	\cleardoublepage
-	\addcontentsline{toc}{chapter}{Publications}
-	\include{frontmatter/publications}
-	\cleardoublepage
-	\tableofcontents
-	\cleardoublepage
-	%\listoffigures
-	%\listoftables
+	\include{frontmatter/main}
+
 	\pagenumbering{arabic}
 
 
