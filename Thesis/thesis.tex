@@ -15,25 +15,23 @@
 \usepackage{hyperref}
 
 \begin{document}
-	\include{frontmatter/main}
+  \include{Frontmatter/main}
 
-	\pagenumbering{arabic}
+  \pagenumbering{arabic}
 
 
-	\include{chapters/one}
-	\cleardoublepage
-	%\addcontentsline{toc}{chapter}{Appendix A}
-	%\include{chapters/appendixA}
-	%\cleardoublepage
-	\addcontentsline{toc}{chapter}{References}
-	\bibliographystyle{siamplain}
-	\renewcommand{\bibname}{References}
-	\bibliography{../references.bib}
-	%\bibliography{/p/tv/DISS_Baeck/diary/bib/literature_db}
-	%\cleardoublepage
-	%\addcontentsline{toc}{chapter}{Academic Curriculum Vitae}
-	%\include{endmatter/curriculum}
-	%\cleardoublepage
-	%\addcontentsline{toc}{chapter}{Akademischer Lebenslauf}
-	%\include{endmatter/lebenslauf}
+  \include{Chapters/main}
+  \cleardoublepage
+
+  %\addcontentsline{toc}{chapter}{Appendix A}
+  %\include{chapters/appendixA}
+  %\cleardoublepage
+
+  \addcontentsline{toc}{chapter}{References}
+  \bibliographystyle{siamplain}
+  \renewcommand{\bibname}{References}
+  \bibliography{../references.bib}
+  \cleardoublepage
+
+  \include{Endmatter/main}
 \end{document}
