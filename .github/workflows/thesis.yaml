@@ -1,0 +1,32 @@
+name: Compile thesis
+
+on: push
+
+permissions:
+  actions: write
+  contents: read
+
+env:
+  DOC_SOURCE: Thesis/Dissertation_Weik.tex
+  DOC_TARGET: Report/Dissertation_Weik.pdf
+
+jobs:
+  compile-thesis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile LaTeX
+        uses: xu-cheng/latex-action@v3
+        with:
+          work_in_root_file_dir: true
+          root_file: "${{ env.DOC_SOURCE }}"
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: ncipollo/release-action@v1
+        with:
+          #artifacts: "${{ env.ABSTRACT }},${{ env.ZUSAMMENFASSUNG }},${{ env.DOC_TARGET }},${{ env.CODE_ARCHIVE }},${{ env.CODE_ARCHIVE_PICS }}"
+          artifacts: "${{ env.DOC_TARGET }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
