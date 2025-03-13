@@ -436,7 +436,6 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
     let create_consumer_node = |consumer_name: &String,
                                 node_name: &String|
      -> Result<Node, Error> {
-        dbg!(&value.scenario.consumer_inputs);
         let consumer_input = &value
             .scenario
             .consumer_inputs

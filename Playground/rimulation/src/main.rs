@@ -1,5 +1,6 @@
 use anyhow::Error;
 use rimulation::{
+    output::write_temperatures,
     simulation::{simulate, simulate_delay},
     types::{
         formats::custom::load,
@@ -12,7 +13,9 @@ fn main() -> Result<(), Error> {
     let settings = network.scenario.settings.clone();
     let network: Network<FixedVelocityPipeParameters> = network.try_into()?;
 
-    simulate_delay(network, settings)?;
+    let result = simulate_delay(&network, &settings)?;
+
+    write_temperatures(&network, &settings, result, "/tmp/output")?;
 
     Ok(())
 }

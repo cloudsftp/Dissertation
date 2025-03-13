@@ -1,8 +1,6 @@
 mod hydraulic;
 mod matrices;
 
-use std::collections::HashSet;
-
 use anyhow::{anyhow, Error};
 use matrices::Matrices;
 use nalgebra::DVector;
@@ -10,7 +8,7 @@ use nalgebra::DVector;
 use crate::{
     types::{
         formats::custom::Settings,
-        network::{Edge, FixedVelocityPipeParameters, Network, Node},
+        network::{FixedVelocityPipeParameters, Network, Node},
     },
     water,
 };
@@ -70,9 +68,9 @@ where
 }
 
 pub fn simulate_delay(
-    network: Network<FixedVelocityPipeParameters>,
-    settings: Settings,
-) -> Result<(), Error> {
+    network: &Network<FixedVelocityPipeParameters>,
+    settings: &Settings,
+) -> Result<Vec<DVector<f64>>, Error> {
     let dealys = DVector::from_iterator(
         network.num_edges(),
         network
@@ -81,8 +79,7 @@ pub fn simulate_delay(
     );
 
     let dt = settings.time_step * 60.;
-    let n =
-        ((settings.time_end - settings.time_start) * (24 * 60 * 60) as f64 / dt).ceil() as usize;
+    let n = settings.num_steps();
 
     let mut result = (0..network.num_nodes())
         .map(|_| DVector::from_element(n, 0 as f64))
@@ -129,7 +126,5 @@ pub fn simulate_delay(
         }
     }
 
-    dbg!(result);
-
-    Ok(())
+    Ok(result)
 }

@@ -95,6 +95,12 @@ pub struct Settings {
     pub tolerance: f64,
 }
 
+impl Settings {
+    pub fn num_steps(&self) -> usize {
+        ((self.time_end - self.time_start) * (24 * 60) as f64 / self.time_step).ceil() as usize
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct DataPoint {
     pub t: f64,
