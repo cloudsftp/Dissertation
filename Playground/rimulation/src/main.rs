@@ -9,7 +9,7 @@ use rimulation::{
 };
 
 fn main() -> Result<(), Error> {
-    let network = load("data/fixed_velocity/single_pipe")?;
+    let network = load("data/fixed_velocity/triangle")?;
     let settings = network.scenario.settings.clone();
     let network: Network<FixedVelocityPipeParameters> = network.try_into()?;
 
