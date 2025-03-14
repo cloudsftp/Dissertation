@@ -373,10 +373,11 @@ fn from_feed() {
             pressure_nodes,
             root_node_index: 4,
             spanning_tree_edges: expected_spanning_tree_edges.clone(),
-            cycle_edges: expected_cycle_edges,
+            cycle_edges: expected_cycle_edges.clone(),
             pred_nodes: expected_pred_nodes,
             edge_indices_by_connected_nodes: expected_spanning_tree_edges
                 .iter()
+                .chain(expected_cycle_edges.iter())
                 .enumerate()
                 .map(|(i, Edge { src, tgt })| [
                     ((*src, *tgt), (i, false)),

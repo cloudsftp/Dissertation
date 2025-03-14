@@ -182,7 +182,7 @@ impl<EdgeParameters> Network<EdgeParameters> {
         let edge_indices_by_connected_nodes: HashMap<(usize, usize), (usize, bool)> =
             spanning_tree_edges
                 .iter()
-                .chain(cycle_edges.iter()) // TODO: test cycle edges are incorporated
+                .chain(cycle_edges.iter())
                 .enumerate()
                 .map(|(i, edge)| {
                     [
