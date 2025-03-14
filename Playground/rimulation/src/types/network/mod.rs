@@ -136,7 +136,7 @@ pub struct Edge {
 }
 
 impl Edge {
-    fn get_other_node(&self, some_node: usize) -> Result<usize, Error> {
+    pub fn get_other_node(&self, some_node: usize) -> Result<usize, Error> {
         if self.src == some_node {
             Ok(self.tgt)
         } else if self.tgt == some_node {
@@ -156,9 +156,9 @@ pub struct Network<T> {
     pub cycle_edges: Vec<Edge>,
     pub pred_nodes: HashMap<usize, usize>,
     pub edge_indices_by_connected_nodes: HashMap<(usize, usize), (usize, bool)>,
+    pub adjacent_edges: HashMap<usize, Vec<usize>>,
     // Future: pressure_edges
     pub edge_parameters: Vec<T>,
-    pub paths: Vec<HashSet<(usize, Vec<(usize, bool)>)>>,
 }
 
 impl<EdgeParameters> Network<EdgeParameters> {
@@ -182,6 +182,7 @@ impl<EdgeParameters> Network<EdgeParameters> {
         let edge_indices_by_connected_nodes: HashMap<(usize, usize), (usize, bool)> =
             spanning_tree_edges
                 .iter()
+                .chain(cycle_edges.iter()) // TODO: test cycle edges are incorporated
                 .enumerate()
                 .map(|(i, edge)| {
                     [
@@ -193,11 +194,18 @@ impl<EdgeParameters> Network<EdgeParameters> {
                 .flatten()
                 .collect();
 
+        let adjacent_edges = get_adjacent_edges(
+            demand_nodes.len() + pressure_nodes.len(),
+            &[spanning_tree_edges.clone(), cycle_edges.clone()].concat(),
+        );
+
+        /*
         let paths = compute_paths_to_sources(
             demand_nodes.len(),
             pressure_nodes.len(),
             &[spanning_tree_edges.clone(), cycle_edges.clone()].concat(),
         );
+        */
 
         Ok(Network {
             demand_nodes,
@@ -207,8 +215,8 @@ impl<EdgeParameters> Network<EdgeParameters> {
             cycle_edges,
             pred_nodes,
             edge_indices_by_connected_nodes,
+            adjacent_edges,
             edge_parameters,
-            paths,
         })
     }
 
@@ -256,6 +264,10 @@ impl<EdgeParameters> Network<EdgeParameters> {
                 num_spanning_tree_edges + num_cycle_edges,
             ))
         }
+    }
+
+    pub fn get_edge_parameters(&self, i: usize) -> Result<&EdgeParameters, Error> {
+        Ok(&self.edge_parameters[i])
     }
 
     pub fn num_cycles(&self) -> usize {
@@ -752,6 +764,7 @@ fn find_spanning_tree(
     Ok((start_node, spanning_tree, cycle_edges, pred_nodes))
 }
 
+/*
 fn compute_paths_to_sources(
     num_demand_nodes: usize,
     num_pressure_nodes: usize,
@@ -803,3 +816,4 @@ fn compute_paths_to_sources(
         })
         .collect()
 }
+*/

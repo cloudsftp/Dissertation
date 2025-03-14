@@ -319,6 +319,14 @@ fn test_filter_network() {
     );
 }
 
+fn edges_from_pairs(pairs: &[(usize, usize)]) -> Vec<Edge> {
+    pairs
+        .iter()
+        .cloned()
+        .map(|(src, tgt)| Edge { src, tgt })
+        .collect()
+}
+
 #[test]
 fn from_feed() {
     let pressure_nodes = vec![Node::Pressure {
@@ -344,27 +352,19 @@ fn from_feed() {
     let network = Network::try_from_feed(nodes, edges, edge_parameters.clone())
         .expect("could not compute the network");
 
-    let expected_spanning_tree_edges = [(4, 0), (4, 1), (0, 2), (0, 3)];
-
-    let expected_paths = vec![
-        set_of(&[
-            (4, vec![(0, true)]),
-            (4, vec![(3, false), (4, false), (1, true)]),
-        ]),
-        set_of(&[
-            (4, vec![(1, true)]),
-            (4, vec![(4, true), (3, true), (0, true)]),
-        ]),
-        set_of(&[
-            (4, vec![(2, true), (0, true)]),
-            (4, vec![(2, true), (3, false), (4, false), (1, true)]),
-        ]),
-        set_of(&[
-            (4, vec![(3, true), (0, true)]),
-            (4, vec![(4, false), (1, true)]),
-        ]),
-        set_of(&[(4, vec![])]),
-    ];
+    let expected_spanning_tree_edges = edges_from_pairs(&[(4, 0), (4, 1), (0, 2), (0, 3)]);
+    let expected_cycle_edges = edges_from_pairs(&[(3, 1)]);
+    let expected_pred_nodes = [(0, 4), (1, 4), (2, 0), (3, 0)].into_iter().collect();
+    let expected_adjacent_edges = [
+        (0, vec![0, 2, 3]),
+        (1, vec![1, 4]),
+        (2, vec![2]),
+        (3, vec![3, 4]),
+        (4, vec![0, 1]),
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
     assert_eq!(
         network,
@@ -372,22 +372,21 @@ fn from_feed() {
             demand_nodes,
             pressure_nodes,
             root_node_index: 4,
-            spanning_tree_edges: expected_spanning_tree_edges
-                .map(|(src, tgt)| Edge { src, tgt })
-                .to_vec(),
-            cycle_edges: vec![Edge { src: 3, tgt: 1 }],
-            pred_nodes: [(0, 4), (1, 4), (2, 0), (3, 0)].into_iter().collect(),
+            spanning_tree_edges: expected_spanning_tree_edges.clone(),
+            cycle_edges: expected_cycle_edges,
+            pred_nodes: expected_pred_nodes,
             edge_indices_by_connected_nodes: expected_spanning_tree_edges
                 .iter()
                 .enumerate()
-                .map(
-                    |(i, (src, tgt))| [((*src, *tgt), (i, false)), ((*tgt, *src), (i, true)),]
-                        .into_iter()
-                )
+                .map(|(i, Edge { src, tgt })| [
+                    ((*src, *tgt), (i, false)),
+                    ((*tgt, *src), (i, true)),
+                ]
+                .into_iter())
                 .flatten()
                 .collect(),
+            adjacent_edges: expected_adjacent_edges,
             edge_parameters,
-            paths: expected_paths,
         }
     );
 }
@@ -547,59 +546,5 @@ fn reordering_demand_nodes() {
             .map(|(src, tgt)| Edge { src, tgt })
             .into_iter()
             .collect::<Vec<_>>()
-    );
-}
-
-#[test]
-fn compute_paths() {
-    let num_demand_nodes = 4;
-    let num_pressure_nodes = 2;
-
-    let spanning_tree_edges = vec![
-        Edge { src: 4, tgt: 0 },
-        Edge { src: 4, tgt: 2 },
-        Edge { src: 5, tgt: 0 }, // TODO: this is a pressure edge - as soon as multiple sources fully supported
-        Edge { src: 5, tgt: 3 },
-        Edge { src: 0, tgt: 1 },
-    ];
-    let cycle_edges = vec![Edge { src: 2, tgt: 1 }];
-
-    let paths = compute_paths_to_sources(
-        num_demand_nodes,
-        num_pressure_nodes,
-        &[spanning_tree_edges, cycle_edges].concat(),
-    );
-
-    assert_eq!(
-        paths,
-        vec![
-            set_of(&[
-                (4, vec![(0, true)]),
-                (4, vec![(4, false), (5, true), (1, true)]),
-                (5, vec![(2, true)]),
-            ]),
-            set_of(&[
-                (4, vec![(4, true), (0, true)]),
-                (4, vec![(5, true), (1, true)]),
-                (5, vec![(4, true), (2, true)]),
-                (5, vec![(5, true), (1, true), (0, false), (2, true)])
-            ]),
-            set_of(&[
-                (4, vec![(5, false), (4, true), (0, true)]),
-                (4, vec![(1, true)]),
-                (5, vec![(5, false), (4, true), (2, true)]),
-                (5, vec![(1, true), (0, false), (2, true)])
-            ]),
-            set_of(&[
-                (4, vec![(3, true), (2, false), (0, true)]),
-                (
-                    4,
-                    vec![(3, true), (2, false), (4, false), (5, true), (1, true)]
-                ),
-                (5, vec![(3, true)])
-            ]),
-            set_of(&[(4, vec![])]),
-            set_of(&[(5, vec![])]),
-        ]
     );
 }

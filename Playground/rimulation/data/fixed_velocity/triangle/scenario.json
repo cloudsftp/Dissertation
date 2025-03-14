@@ -5,7 +5,7 @@
         "ground_temperature": 10,
         "time_start": 0,
         "time_end": 0.03,
-        "time_step": 5,
+        "time_step": 1,
         "ramp_time": 8,
         "num_iterations": 100,
         "tolerance": 1e-6

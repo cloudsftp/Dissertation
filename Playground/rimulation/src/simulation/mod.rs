@@ -70,61 +70,106 @@ where
 pub fn simulate_delay(
     network: &Network<FixedVelocityPipeParameters>,
     settings: &Settings,
-) -> Result<Vec<DVector<f64>>, Error> {
-    let dealys = DVector::from_iterator(
+) -> Result<Vec<(usize, DVector<f64>)>, Error> {
+    let delays = DVector::from_iterator(
         network.num_edges(),
         network
             .edge_parameters()
             .map(|FixedVelocityPipeParameters { length, velocity }| length / velocity),
     );
 
+    dbg!(&delays);
+
     let dt = settings.time_step * 60.;
     let n = settings.num_steps();
 
-    let mut result = (0..network.num_nodes())
-        .map(|_| DVector::from_element(n, 0 as f64))
+    let mut result = network
+        .demand_nodes
+        .iter()
+        .enumerate()
+        .filter(|(_, node)| matches!(node, Node::Demand { .. }))
+        .map(|(i, _)| (i, DVector::from_element(n, 0 as f64)))
         .collect::<Vec<_>>();
 
-    for (i, result) in result.iter_mut().enumerate() {
-        let path_delays: Vec<_> = network.paths[i]
-            .iter()
-            .filter(|(_, path)| {
-                path.iter().all(|(edge_index, correct_direction)| {
-                    if *correct_direction {
-                        network.edge_parameters[*edge_index].velocity > 0.
-                    } else {
-                        network.edge_parameters[*edge_index].velocity < 0.
-                    }
-                })
-            })
-            .map(|(source_index, path)| {
-                let mut delay = 0.;
-
-                for (edge_index, _) in path {
-                    delay += dealys[*edge_index];
-                }
-
-                (source_index, delay)
-            })
-            .collect();
-
+    for (i, result) in result.iter_mut() {
         for t in 0..n {
-            let mut value = 0.;
-
-            for (source_index, delay) in &path_delays {
-                let t = t as f64 * settings.time_step - delay;
-
-                let source = &network.pressure_nodes[*source_index - network.demand_nodes.len()];
-                if let Node::Pressure { temperature, .. } = source {
-                    value += temperature.value_at(t)?;
-                } else {
-                    return Err(anyhow!("not a source node"));
-                }
-            }
-
-            result[t] = value;
+            result[t] = compute_temperature_rec(
+                network,
+                settings,
+                &delays,
+                *i,
+                t as f64 * settings.time_step,
+            )?;
         }
     }
 
     Ok(result)
+}
+
+fn compute_temperature_rec(
+    network: &Network<FixedVelocityPipeParameters>,
+    settings: &Settings,
+    delays: &DVector<f64>,
+    current_node_index: usize,
+    time: f64,
+) -> Result<f64, Error> {
+    if let Node::Pressure { temperature, .. } = network.get_node(current_node_index)? {
+        return temperature.value_at(time);
+    }
+
+    let calls = network
+        .adjacent_edges
+        .get(&current_node_index)
+        .ok_or(anyhow!(
+            "could not get adjacent edges to node {}",
+            current_node_index
+        ))?
+        .iter()
+        .map(|edge_index| -> Result<_, Error> {
+            let next_node_index = network
+                .get_edge(*edge_index)?
+                .get_other_node(current_node_index)?;
+
+            let (_, reverse) = *network
+                .edge_indices_by_connected_nodes
+                .get(&(next_node_index, current_node_index))
+                .ok_or(anyhow!(
+                    "no edge connecting nodes {} and {}",
+                    current_node_index,
+                    next_node_index
+                ))?;
+
+            let FixedVelocityPipeParameters { velocity, .. } =
+                network.get_edge_parameters(*edge_index)?;
+
+            Ok((*edge_index, next_node_index, *velocity, reverse))
+        })
+        .collect::<Result<Vec<_>, Error>>()?
+        .iter()
+        .filter_map(|(edge_index, next_node_index, velocity, reverse)| {
+            ((*velocity < 0.) == *reverse).then_some((
+                *next_node_index,
+                delays[*edge_index],
+                velocity.abs(),
+            ))
+        })
+        .collect::<Vec<_>>();
+
+    let total_weight: f64 = calls.iter().map(|(_, _, weight)| weight).sum();
+
+    let mut temperature = 0.;
+
+    for (next_node_index, time_delay, weight) in calls.into_iter() {
+        temperature += weight / total_weight * {
+            compute_temperature_rec(
+                network,
+                settings,
+                delays,
+                next_node_index,
+                time - time_delay,
+            )?
+        };
+    }
+
+    Ok(temperature)
 }
