@@ -1,0 +1,11 @@
+{
+    "parameters": {
+        "v1": {
+            "length": 2,
+            "velocity": 1
+        }
+    },
+    "pipes": {
+        "PF1": "v1"
+    }
+}

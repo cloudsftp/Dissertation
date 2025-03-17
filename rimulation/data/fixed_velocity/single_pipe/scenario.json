@@ -1,0 +1,69 @@
+{
+    "settings": {
+        "feed_temperature": 100,
+        "return_temperature": 60,
+        "ground_temperature": 10,
+        "time_start": 0,
+        "time_end": 0.03,
+        "time_step": 5,
+        "ramp_time": 8,
+        "num_iterations": 100,
+        "tolerance": 1e-6
+    },
+    "signals": {
+        "C1_demand": {
+            "const": {
+                "scale": 1,
+                "data": 1
+            }
+        },
+        "C1_return_temperature": {
+            "const": {
+                "scale": 1,
+                "data": 1
+            }
+        },
+        "S1_base_pressure": {
+            "const": {
+                "scale": 1,
+                "data": 1
+            }
+        },
+        "S1_pressure_lift": {
+            "const": {
+                "scale": 1,
+                "data": 1
+            }
+        },
+        "S1_temperature": {
+            "step": {
+                "low": 60,
+                "high": 120,
+                "time": 10
+            }
+        }
+    },
+    "inputs": {
+        "CON_IN_1": {
+            "demand": "C1_demand",
+            "return_temperature": "C1_return_temperature"
+        },
+        "SRC_IN_1": {
+            "base_pressure": "S1_base_pressure",
+            "pressure_lift": "S1_pressure_lift",
+            "temperature": "S1_temperature"
+        }
+    },
+    "consumer_inputs": {
+        "C1": {
+            "input": "CON_IN_1",
+            "factors": {
+                "yearly_demand": 300,
+                "normal_return_temperature": 60
+            }
+        }
+    },
+    "source_inputs": {
+        "S1": "SRC_IN_1"
+    }
+}

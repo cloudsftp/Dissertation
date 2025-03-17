@@ -1,0 +1,132 @@
+{
+    "nodes": [
+        {
+            "name": "F001",
+            "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            "feed": true
+        },
+        {
+            "name": "F002",
+            "position": {
+                "x": 100,
+                "y": 0,
+                "z": 0
+            },
+            "feed": true
+        },
+        {
+            "name": "F003",
+            "position": {
+                "x": 100,
+                "y": 100,
+                "z": 0
+            },
+            "feed": true
+        },
+        {
+            "name": "F004",
+            "position": {
+                "x": 0,
+                "y": 100,
+                "z": 0
+            },
+            "feed": true
+        },
+        {
+            "name": "R001",
+            "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            "feed": false
+        },
+        {
+            "name": "R002",
+            "position": {
+                "x": 100,
+                "y": 0,
+                "z": 0
+            },
+            "feed": false
+        },
+        {
+            "name": "R003",
+            "position": {
+                "x": 100,
+                "y": 100,
+                "z": 0
+            },
+            "feed": false
+        },
+        {
+            "name": "R004",
+            "position": {
+                "x": 0,
+                "y": 100,
+                "z": 0
+            },
+            "feed": false
+        }
+    ],
+    "pipes": [
+        {
+            "name": "PF1",
+            "src": "F001",
+            "tgt": "F002"
+        },
+        {
+            "name": "PF2",
+            "src": "F002",
+            "tgt": "F003"
+        },
+        {
+            "name": "PF3",
+            "src": "F003",
+            "tgt": "F004"
+        },
+        {
+            "name": "PF4",
+            "src": "F002",
+            "tgt": "F004"
+        },
+        {
+            "name": "PR1",
+            "src": "R002",
+            "tgt": "R001"
+        },
+        {
+            "name": "PR2",
+            "src": "R003",
+            "tgt": "R002"
+        },
+        {
+            "name": "PR3",
+            "src": "R004",
+            "tgt": "R003"
+        },
+        {
+            "name": "PR4",
+            "src": "R004",
+            "tgt": "R002"
+        }
+    ],
+    "consumers": [
+        {
+            "name": "C1",
+            "src": "F004",
+            "tgt": "R004"
+        }
+    ],
+    "sources": [
+        {
+            "name": "S1",
+            "src": "R001",
+            "tgt": "F001"
+        }
+    ]
+}
