@@ -23,6 +23,17 @@ pub fn write_temperatures<EdgeParameters>(
         return Err(anyhow!("more result vectors than nodes in network"));
     }
 
+    for (i, temperatures) in &result {
+        if temperatures.len() < settings.num_steps() {
+            return Err(anyhow!(
+                "temperature vector for node {} has {} elements, but simulation steps {} times",
+                i,
+                temperatures.len(),
+                settings.num_steps()
+            ));
+        }
+    }
+
     let mut writer = Writer::from_writer(File::create(output_file_name)?);
 
     writer.write_record(
