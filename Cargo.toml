@@ -1,1 +1,1 @@
-workspace = { members = ["Playground/rimulation"], resolver = "2" }
+workspace = { members = ["rimulation"], resolver = "2" }
