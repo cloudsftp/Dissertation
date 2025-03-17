@@ -1,7 +1,4 @@
-use crate::types::network::{
-    test::{DUMMY_PARSED_PIPE_PARAMETERS, DUMMY_PIPE_PARAMETERS},
-    FullPipeParameters,
-};
+use crate::types::network::test::DUMMY_PARSED_PIPE_PARAMETERS;
 
 use super::*;
 

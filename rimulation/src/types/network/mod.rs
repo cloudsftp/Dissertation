@@ -193,14 +193,13 @@ impl<EdgeParameters> Network<EdgeParameters> {
                 .iter()
                 .chain(cycle_edges.iter())
                 .enumerate()
-                .map(|(i, edge)| {
+                .flat_map(|(i, edge)| {
                     [
                         ((edge.src, edge.tgt), (i, false)),
                         ((edge.tgt, edge.src), (i, true)),
                     ]
                     .into_iter()
                 })
-                .flatten()
                 .collect();
 
         let adjacent_edges = get_adjacent_edges(
@@ -701,7 +700,7 @@ fn filter_network<EdgeParameters>(
     let edge_parameters = edge_parameters
         .into_iter()
         .enumerate()
-        .filter_map(|(i, edge_parameters)| edges_to_keep.contains(&i).then(|| edge_parameters))
+        .filter_map(|(i, edge_parameters)| edges_to_keep.contains(&i).then_some(edge_parameters))
         .collect();
 
     Ok((nodes, edges, edge_parameters))

@@ -89,7 +89,7 @@ fn ar<PipeParameters>(network: &Network<PipeParameters>) -> DMatrix<f64> {
         network.num_edges(),
         network.demand_nodes.len(),
         (0..network.demand_nodes.len())
-            .map(|i| {
+            .flat_map(|i| {
                 network.edges().map(move |edge| {
                     if edge.src == i {
                         -1.
@@ -99,8 +99,7 @@ fn ar<PipeParameters>(network: &Network<PipeParameters>) -> DMatrix<f64> {
                         0.
                     }
                 })
-            })
-            .flatten(),
+            }),
     )
 }
 
@@ -112,7 +111,7 @@ fn arp<PipeParameters>(network: &Network<PipeParameters>) -> DMatrix<f64> {
         network.num_edges(),
         num_pressure_nodes,
         (0..num_pressure_nodes)
-            .map(|i| {
+            .flat_map(|i| {
                 let i = num_demand_nodes + i;
                 network.edges().map(move |edge| {
                     if edge.src == i {
@@ -123,8 +122,7 @@ fn arp<PipeParameters>(network: &Network<PipeParameters>) -> DMatrix<f64> {
                         0.
                     }
                 })
-            })
-            .flatten(),
+            }),
     )
 }
 
@@ -140,8 +138,7 @@ fn at<PipeParameters>(network: &Network<PipeParameters>) -> DMatrix<f64> {
         network.demand_nodes.len(),
         network.num_edges(),
         (0..network.num_edges())
-            .map(|i| (0..network.demand_nodes.len()).map(move |j| if i == j { 1. } else { 0. }))
-            .flatten(),
+            .flat_map(|i| (0..network.demand_nodes.len()).map(move |j| if i == j { 1. } else { 0. })),
     )
 }
 
@@ -269,8 +266,7 @@ mod tests {
                     pressure: DUMMY_CONST_SIGNAL,
                     temperature: DUMMY_CONST_SIGNAL,
                     position: DUMMY_CUSTOM_POSITION,
-                }]
-                .into_iter(),
+                }],
             )
             .collect();
         let edges = [(0, 4), (0, 1), (1, 2), (3, 2), (3, 4)]

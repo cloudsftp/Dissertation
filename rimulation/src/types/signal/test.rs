@@ -36,14 +36,14 @@ fn assert_convert_polynomial_errors(
 
     assert!(result.is_err(), "test case '{}' did not error", name,);
 
-    let err = result.err().expect("it is err");
+    let err = result.expect_err("it is err");
 
     assert!(
         err.to_string().contains(expected_msg),
         "error message not as expected for test case '{}': expected {}, got {}",
         name,
         expected_msg,
-        err.to_string(),
+        err,
     );
 }
 
@@ -156,7 +156,7 @@ fn cubic_interpolation() {
     for DataPoint { t, v } in &data {
         let y = cubic_signal
             .value_at(*t)
-            .expect(&format!("could not evaluate signal at {}", t));
+            .unwrap_or_else(|_| panic!("could not evaluate signal at {}", t));
 
         assert_relative_eq!(y, v);
     }
@@ -170,7 +170,7 @@ fn cubic_interpolation() {
 
         let v = cubic_signal
             .value_at(t)
-            .expect(&format!("could not evaluate signal at {}", t));
+            .unwrap_or_else(|_| panic!("could not evaluate signal at {}", t));
         file.write(format!("{}\n", v).as_bytes())
             .expect("could not write data to temporary file");
     }

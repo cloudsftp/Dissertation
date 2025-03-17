@@ -1,4 +1,3 @@
-use nalgebra::{matrix, vector};
 
 use crate::polynome::poly;
 

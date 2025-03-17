@@ -255,8 +255,8 @@ fn assert_filter_network(
 ) {
     let (nodes, edges, edge_parameters) = create_test_nodes_and_edges(num_nodes, edges);
 
-    let nodes_to_keep = nodes_to_keep.into_iter().cloned().collect();
-    let edges_to_keep = edges_to_keep.into_iter().cloned().collect();
+    let nodes_to_keep = nodes_to_keep.iter().cloned().collect();
+    let edges_to_keep = edges_to_keep.iter().cloned().collect();
 
     let (filtered_nodes, filtered_edges, _) =
         filter_network(nodes, edges, edge_parameters, nodes_to_keep, edges_to_keep)
@@ -397,12 +397,11 @@ fn from_feed() {
                 .iter()
                 .chain(expected_cycle_edges.iter())
                 .enumerate()
-                .map(|(i, Edge { src, tgt })| [
+                .flat_map(|(i, Edge { src, tgt })| [
                     ((*src, *tgt), (i, false)),
                     ((*tgt, *src), (i, true)),
                 ]
                 .into_iter())
-                .flatten()
                 .collect(),
             adjacent_edges: expected_adjacent_edges,
             edge_parameters,

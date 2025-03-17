@@ -1,11 +1,10 @@
 mod hydraulic;
 mod matrices;
 
-use std::collections::HashMap;
 
 use anyhow::{anyhow, Error};
 use matrices::Matrices;
-use nalgebra::{DMatrix, DVector};
+use nalgebra::DVector;
 
 use crate::{
     types::{
