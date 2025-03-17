@@ -1,5 +1,5 @@
-use csv::{Reader, ReaderBuilder, Writer};
-use std::{collections::HashSet, fs::File};
+use csv::{ReaderBuilder, Writer};
+use std::fs::File;
 
 use anyhow::{anyhow, Error};
 use nalgebra::DVector;
