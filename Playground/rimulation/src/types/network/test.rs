@@ -1,5 +1,7 @@
 use std::hash::Hash;
 
+use custom::test_util::DUMMY_CUSTOM_POSITION;
+
 use super::*;
 
 use super::super::formats::custom::test_util::{DUMMY_CONST_CUSTOM_SIGNAL, DUMMY_CONSUMER_FACTORS};
@@ -28,6 +30,7 @@ fn create_test_nodes_and_edges(
     let nodes = (0..num_nodes)
         .map(|i| Node::Zero {
             name: format!("N{}", i),
+            position: DUMMY_CUSTOM_POSITION,
         })
         .collect();
 
@@ -80,29 +83,36 @@ fn from_custom_network() {
         network.nodes().cloned().collect::<Vec<_>>(),
         [
             Node::Zero {
-                name: String::from("N1")
+                name: String::from("N1"),
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Zero {
-                name: String::from("N2")
+                name: String::from("N2"),
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Zero {
-                name: String::from("N3")
+                name: String::from("N3"),
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Zero {
-                name: String::from("N4")
+                name: String::from("N4"),
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Demand {
                 name: String::from("N5"),
                 demand: scaled_dummy_const_signal.clone(),
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Demand {
                 name: String::from("N6"),
                 demand: scaled_dummy_const_signal.clone(),
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Pressure {
                 name: String::from("N0"),
                 pressure: DUMMY_CONST_SIGNAL,
-                temperature: DUMMY_CONST_SIGNAL
+                temperature: DUMMY_CONST_SIGNAL,
+                position: DUMMY_CUSTOM_POSITION,
             },
         ]
         .to_vec()
@@ -145,21 +155,26 @@ fn extract_nodes_of_custom_net() {
             Node::Pressure {
                 name: String::from("N0"),
                 pressure: DUMMY_CONST_SIGNAL,
-                temperature: DUMMY_CONST_SIGNAL
+                temperature: DUMMY_CONST_SIGNAL,
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Zero {
-                name: String::from("N1")
+                name: String::from("N1"),
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Zero {
-                name: String::from("N2")
+                name: String::from("N2"),
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Demand {
                 name: String::from("N3"),
                 demand: scaled_dummy_const_signal.clone(),
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Demand {
                 name: String::from("N4"),
                 demand: scaled_dummy_const_signal.clone(),
+                position: DUMMY_CUSTOM_POSITION,
             },
         ]
     );
@@ -252,7 +267,8 @@ fn assert_filter_network(
         expected_nodes
             .iter()
             .map(|i| Node::Zero {
-                name: format!("N{}", i)
+                name: format!("N{}", i),
+                position: DUMMY_CUSTOM_POSITION,
             })
             .collect::<Vec<_>>(),
         "filtered nodes not as expected in test case '{}'",
@@ -333,11 +349,13 @@ fn from_feed() {
         name: String::from("N0"),
         pressure: DUMMY_CONST_SIGNAL,
         temperature: DUMMY_CONST_SIGNAL,
+        position: DUMMY_CUSTOM_POSITION,
     }];
     let demand_nodes: Vec<Node> = (1..5)
         .map(|i| Node::Demand {
             name: format!("N{}", i),
             demand: DUMMY_CONST_SIGNAL,
+            position: DUMMY_CUSTOM_POSITION,
         })
         .collect();
     let nodes = [pressure_nodes.clone(), demand_nodes.clone()].concat();
@@ -475,26 +493,32 @@ fn reordering_demand_nodes() {
     let nodes = vec![
         Node::Zero {
             name: String::from("N0"),
+            position: DUMMY_CUSTOM_POSITION,
         },
         Node::Pressure {
             name: String::from("N1"),
             pressure: zero.clone(),
             temperature: zero.clone(),
+            position: DUMMY_CUSTOM_POSITION,
         },
         Node::Demand {
             name: String::from("N2"),
             demand: zero.clone(),
+            position: DUMMY_CUSTOM_POSITION,
         },
         Node::Zero {
             name: String::from("N3"),
+            position: DUMMY_CUSTOM_POSITION,
         },
         Node::Zero {
             name: String::from("N4"),
+            position: DUMMY_CUSTOM_POSITION,
         },
         Node::Pressure {
             name: String::from("N5"),
             pressure: zero.clone(),
             temperature: zero.clone(),
+            position: DUMMY_CUSTOM_POSITION,
         },
     ];
 
@@ -512,16 +536,20 @@ fn reordering_demand_nodes() {
         vec![
             Node::Zero {
                 name: String::from("N0"),
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Demand {
                 name: String::from("N2"),
                 demand: zero.clone(),
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Zero {
                 name: String::from("N3"),
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Zero {
                 name: String::from("N4"),
+                position: DUMMY_CUSTOM_POSITION,
             },
         ],
     );
@@ -532,11 +560,13 @@ fn reordering_demand_nodes() {
                 name: String::from("N1"),
                 pressure: zero.clone(),
                 temperature: zero.clone(),
+                position: DUMMY_CUSTOM_POSITION,
             },
             Node::Pressure {
                 name: String::from("N5"),
                 pressure: zero.clone(),
                 temperature: zero.clone(),
+                position: DUMMY_CUSTOM_POSITION,
             },
         ],
     );

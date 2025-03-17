@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::from_reader;
 use std::{collections::HashMap, fs};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Position {
     pub x: f64,
     pub y: f64,

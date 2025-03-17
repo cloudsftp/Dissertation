@@ -248,22 +248,27 @@ mod tests {
 
     use super::*;
 
-    use crate::types::network::{
-        test::{DUMMY_CONST_SIGNAL, DUMMY_PIPE_PARAMETERS},
-        Edge, Node,
-    };
     use crate::types::network::{EmptyPipeParameters, FullPipeParameters};
+    use crate::types::{
+        formats::custom::test_util::DUMMY_CUSTOM_POSITION,
+        network::{
+            test::{DUMMY_CONST_SIGNAL, DUMMY_PIPE_PARAMETERS},
+            Edge, Node,
+        },
+    };
 
     fn create_test_net() -> Network<EmptyPipeParameters> {
         let nodes = (0..4)
             .map(|i| Node::Zero {
                 name: format!("N{}", i),
+                position: DUMMY_CUSTOM_POSITION,
             })
             .chain(
                 [Node::Pressure {
                     name: String::from("N4"),
                     pressure: DUMMY_CONST_SIGNAL,
                     temperature: DUMMY_CONST_SIGNAL,
+                    position: DUMMY_CUSTOM_POSITION,
                 }]
                 .into_iter(),
             )
@@ -287,6 +292,7 @@ mod tests {
         let nodes = (0..5)
             .map(|i| Node::Zero {
                 name: format!("N{}", i),
+                position: DUMMY_CUSTOM_POSITION,
             })
             .collect();
         let edges = [(1, 0), (1, 2), (2, 3), (4, 3), (4, 0)]
@@ -359,6 +365,7 @@ mod tests {
         let nodes = (0..4)
             .map(|i| Node::Zero {
                 name: format!("N{}", i),
+                position: DUMMY_CUSTOM_POSITION,
             })
             .collect();
         let edges = [(1, 0), (1, 2), (2, 3), (1, 3), (3, 0), (1, 2)]

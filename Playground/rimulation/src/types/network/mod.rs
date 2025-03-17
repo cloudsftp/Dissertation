@@ -2,7 +2,7 @@
 pub mod test;
 
 use super::formats::{
-    custom::{self, Input, PipeParameters},
+    custom::{self, Input, PipeParameters, Position},
     NamedComponent,
 };
 use super::signal::Signal;
@@ -18,26 +18,35 @@ pub enum Node {
         name: String,
         pressure: Signal,
         temperature: Signal,
+        position: Position,
     },
     Demand {
         name: String,
         demand: Signal,
+        position: Position,
     },
     Zero {
         name: String,
+        position: Position,
     },
+}
+
+impl Node {
+    pub fn get_position(&self) -> Position {
+        match self {
+            Node::Pressure { position, .. } => position.clone(),
+            Node::Demand { position, .. } => position.clone(),
+            Node::Zero { position, .. } => position.clone(),
+        }
+    }
 }
 
 impl NamedComponent for Node {
     fn get_name(&self) -> String {
         match self {
-            Node::Pressure {
-                name,
-                pressure: _,
-                temperature: _,
-            } => name.clone(),
-            Node::Demand { name, demand: _ } => name.clone(),
-            Node::Zero { name } => name.clone(),
+            Node::Pressure { name, .. } => name.clone(),
+            Node::Demand { name, .. } => name.clone(),
+            Node::Zero { name, .. } => name.clone(),
         }
     }
 }
@@ -125,8 +134,8 @@ impl HydraulicPipeParameters for FullPipeParameters {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct FixedVelocityPipeParameters {
-    pub length: f64,
-    pub velocity: f64,
+    pub length: f64,   // in m
+    pub velocity: f64, // in m/s
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -446,7 +455,7 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
     };
 
     let create_consumer_node = |consumer_name: &String,
-                                node_name: &String|
+                                node: &custom::Node|
      -> Result<Node, Error> {
         let consumer_input = &value
             .scenario
@@ -481,12 +490,13 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
             .scale_data(consumer_input.factors.yearly_demand / HOURS_PER_YEAR)
             .try_into()?;
         Ok(Node::Demand {
-            name: node_name.clone(),
+            name: node.name.clone(),
             demand,
+            position: node.position.clone(),
         })
     };
 
-    let create_source_node = |source_name: &String, node_name: &String| {
+    let create_source_node = |source_name: &String, node: &custom::Node| {
         let source_input_name = value
             .scenario
             .source_inputs
@@ -512,9 +522,10 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
         let temperature = get_signal(temperature_signal_name)?.try_into()?;
 
         Ok(Node::Pressure {
-            name: node_name.clone(),
+            name: node.name.clone(),
             pressure,
             temperature,
+            position: node.position.clone(),
         })
     };
 
@@ -523,14 +534,14 @@ fn extract_nodes(value: &custom::Network) -> Result<Vec<Node>, Error> {
         .nodes
         .iter()
         .map(|node| {
-            let node_name = &node.name;
-            if let Some(consumer_name) = consumers_by_node.get(node_name) {
-                create_consumer_node(consumer_name, node_name)
+            if let Some(consumer_name) = consumers_by_node.get(&node.name) {
+                create_consumer_node(consumer_name, node)
             } else if let Some(source_name) = sources_by_node.get(&node.name) {
-                create_source_node(source_name, node_name)
+                create_source_node(source_name, node)
             } else {
                 Ok(Node::Zero {
                     name: node.name.clone(),
+                    position: node.position.clone(),
                 })
             }
         })
@@ -763,57 +774,3 @@ fn find_spanning_tree(
 
     Ok((start_node, spanning_tree, cycle_edges, pred_nodes))
 }
-
-/*
-fn compute_paths_to_sources(
-    num_demand_nodes: usize,
-    num_pressure_nodes: usize,
-    edges: &[Edge],
-) -> Vec<HashSet<(usize, Vec<(usize, bool)>)>> {
-    let adjacent_edges = get_adjacent_edges(num_demand_nodes + num_pressure_nodes, edges);
-
-    (0..num_demand_nodes + num_pressure_nodes)
-        .map(|i| {
-            if i >= num_demand_nodes {
-                return [(i, vec![])].iter().cloned().collect();
-            }
-
-            let mut paths = HashSet::new();
-
-            let mut work = VecDeque::new();
-
-            work.push_back((i, vec![], [i].iter().cloned().collect::<HashSet<_>>()));
-
-            while !work.is_empty() {
-                let (current_node, path, visited) = work.pop_front().expect("work queue is not empty per loop definition");
-
-                if let Some(edge_indices) = adjacent_edges.get(&current_node) {
-                    for edge_index in edge_indices {
-                        let edge = &edges[*edge_index];
-                        let next_node = edge.get_other_node(current_node).expect("edge has to connect to node since its index is from the adjacent edges map");
-
-                        if visited.contains(&next_node) {
-                            continue;
-                        }
-
-                        let mut path = path.clone();
-                        let direction_to_target = edge.src == next_node;
-                        path.push((*edge_index, direction_to_target));
-
-                        if next_node >= num_demand_nodes {
-                            paths.insert((next_node, path.clone()));
-                        }
-
-                        let mut visited = visited.clone();
-                        visited.insert(next_node);
-
-                        work.push_back((next_node, path, visited))
-                    }
-                }
-            }
-
-            paths
-        })
-        .collect()
-}
-*/
