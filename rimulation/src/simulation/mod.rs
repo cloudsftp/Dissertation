@@ -1,9 +1,11 @@
 mod hydraulic;
 mod matrices;
 
+use std::collections::HashMap;
+
 use anyhow::{anyhow, Error};
 use matrices::Matrices;
-use nalgebra::DVector;
+use nalgebra::{DMatrix, DVector};
 
 use crate::{
     types::{
@@ -76,8 +78,6 @@ pub fn simulate_delay(
             .map(|FixedVelocityPipeParameters { length, velocity }| length / velocity),
     );
 
-    dbg!(&delays);
-
     let dt = settings.time_step * 60.;
     let n = settings.num_steps();
 
@@ -91,12 +91,15 @@ pub fn simulate_delay(
 
     for (i, result) in result.iter_mut() {
         for t in 0..n {
+            let visited_counter = DVector::from_element(network.num_nodes(), 0);
+
             result[t] = compute_temperature_rec(
                 network,
                 settings,
                 &delays,
                 *i,
                 t as f64 * settings.time_step,
+                visited_counter,
             )?;
         }
     }
@@ -104,16 +107,32 @@ pub fn simulate_delay(
     Ok(result)
 }
 
+const VISITED_COUNT_THRESHOLD: usize = 3;
+
 fn compute_temperature_rec(
     network: &Network<FixedVelocityPipeParameters>,
     settings: &Settings,
     delays: &DVector<f64>,
     current_node_index: usize,
     time: f64,
+    mut visited_counter: DVector<usize>,
 ) -> Result<f64, Error> {
     if let Node::Pressure { temperature, .. } = network.get_node(current_node_index)? {
         return temperature.value_at(time);
     }
+
+    let count = visited_counter.get_mut(current_node_index).ok_or(anyhow!(
+        "could not get visited count for node {}",
+        current_node_index
+    ))?;
+    if *count > VISITED_COUNT_THRESHOLD {
+        return Err(anyhow!(
+            "simulation visited node {} more than {} times",
+            current_node_index,
+            VISITED_COUNT_THRESHOLD
+        ));
+    }
+    *count += 1;
 
     let calls = network
         .adjacent_edges
@@ -165,6 +184,7 @@ fn compute_temperature_rec(
                 delays,
                 next_node_index,
                 time - time_delay,
+                visited_counter.clone(),
             )?
         };
     }
