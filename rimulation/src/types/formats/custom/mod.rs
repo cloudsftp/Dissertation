@@ -247,7 +247,7 @@ pub mod test {
     fn no_error_parsing_custom_format_parameters() {
         let file =
             fs::File::open("data/custom_format/parameters.json").expect("could not open file");
-        let _: Parameters = from_reader(file).expect("could not parse scenario json");
+        let _: Parameters = from_reader(file).expect("could not parse parameters json");
     }
 }
 

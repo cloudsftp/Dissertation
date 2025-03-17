@@ -35,8 +35,6 @@ pub fn simulate<PipeParameters>(
 where
     PipeParameters: std::fmt::Debug,
 {
-    let matrices = Matrices::try_from(&network)?;
-
     let e = DVector::from_vec(initial_energy_densities(&network, &settings)?);
 
     let matrices = Matrices::try_from(&network)?;
