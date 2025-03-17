@@ -19,17 +19,23 @@ pub fn write_temperatures<EdgeParameters>(
 
     if num_nodes == 0 {
         return Err(anyhow!("no nodes in input"));
+    } else if result.len() > num_nodes {
+        return Err(anyhow!("more result vectors than nodes in network"));
     }
 
     let mut writer = Writer::from_writer(File::create(output_file_name)?);
 
-    let demand_node_indices: HashSet<&usize> = result.iter().map(|(i, _)| i).collect();
-
     writer.write_record(
-        network
-            .nodes()
-            .enumerate()
-            .filter_map(|(i, node)| demand_node_indices.contains(&i).then_some(node.get_name())),
+        result
+            .iter()
+            .map(|(i, _)| {
+                network
+                    .nodes()
+                    .nth(*i)
+                    .ok_or(anyhow!("could not get node {}", i))
+                    .map(|node| node.get_name())
+            })
+            .collect::<Result<Vec<_>, Error>>()?,
     )?;
 
     for record in (0..settings.num_steps()).map(|t| {
