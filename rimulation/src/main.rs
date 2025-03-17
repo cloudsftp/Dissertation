@@ -1,7 +1,7 @@
 use anyhow::Error;
 use clap::{Parser, Subcommand};
 use rimulation::{
-    output::write_temperatures,
+    output::{read_temperatures, write_temperatures},
     simulation::simulate_delay,
     types::{
         formats::custom::load,
@@ -41,7 +41,15 @@ fn main() -> Result<(), Error> {
             )?;
         }
         Commands::Recover { directory } => {
-            todo!()
+            let network = load(directory)?;
+            let settings = network.scenario.settings.clone();
+            let network: Network<FixedVelocityPipeParameters> = network.try_into()?;
+
+            let results = read_temperatures(
+                &network,
+                &settings,
+                format!("{}/result", directory).as_str(),
+            )?;
         }
     }
 

@@ -1,7 +1,6 @@
 mod hydraulic;
 mod matrices;
 
-
 use anyhow::{anyhow, Error};
 use matrices::Matrices;
 use nalgebra::DVector;
@@ -77,14 +76,12 @@ pub fn simulate_delay(
             .map(|FixedVelocityPipeParameters { length, velocity }| length / velocity),
     );
 
-    let dt = settings.time_step * 60.;
     let n = settings.num_steps();
 
     let mut result = network
-        .demand_nodes
-        .iter()
+        .nodes()
         .enumerate()
-        .filter(|(_, node)| matches!(node, Node::Demand { .. }))
+        .filter(|(_, node)| !matches!(node, Node::Zero { .. }))
         .map(|(i, _)| (i, DVector::from_element(n, 0 as f64)))
         .collect::<Vec<_>>();
 
