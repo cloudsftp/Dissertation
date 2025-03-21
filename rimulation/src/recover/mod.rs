@@ -87,7 +87,7 @@ fn delay_distance(
 
 #[cfg(test)]
 mod tests {
-    use approx::{assert_relative_eq, relative_eq};
+    use approx::relative_eq;
 
     use crate::types::{formats::custom::Position, network::test::DUMMY_CONST_SIGNAL};
 
@@ -116,7 +116,7 @@ mod tests {
                 signal_a: &[60., 60., 120., 120., 120., 120.],
                 signal_b: &[60., 60., 60., 120., 120., 120.],
                 offset: 1,
-                distance: 1.,
+                distance: 0.,
             },
         ];
 
@@ -153,15 +153,27 @@ mod tests {
 
         let test_cases = [
             TestCase {
-                name: "simple",
+                name: "step function, delay exactly one",
                 signal_a: &[60., 60., 120., 120., 120., 120.],
                 signal_b: &[60., 60., 60., 120., 120., 120.],
                 expected_delay: 1,
             },
             TestCase {
-                name: "simple",
+                name: "step function, delay exactly one and one half",
                 signal_a: &[60., 60., 120., 120., 120., 120.],
                 signal_b: &[60., 60., 60., 90., 120., 120.],
+                expected_delay: 1,
+            },
+            TestCase {
+                name: "step function, dealy bigger than one and one half",
+                signal_a: &[60., 60., 120., 120., 120., 120.],
+                signal_b: &[60., 60., 60., 80., 120., 120.],
+                expected_delay: 2,
+            },
+            TestCase {
+                name: "step function, dealy smaller than one and one half",
+                signal_a: &[60., 60., 120., 120., 120., 120.],
+                signal_b: &[60., 60., 60., 100., 120., 120.],
                 expected_delay: 1,
             },
         ];
